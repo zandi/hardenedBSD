@@ -57,7 +57,6 @@ SUBDIR=	adduser \
 	nfsuserd \
 	nmtree \
 	nologin \
-	paxctl \
 	${_pc_sysinstall} \
 	pciconf \
 	periodic \
