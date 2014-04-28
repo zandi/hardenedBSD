@@ -293,6 +293,10 @@ SUBDIR+=	praliases
 SUBDIR+=	sendmail
 .endif
 
+.if ${MK_TESTS} != "no"
+SUBDIR+=	tests
+.endif
+
 .if ${MK_TOOLCHAIN} != "no"
 SUBDIR+=	config
 SUBDIR+=	crunch
