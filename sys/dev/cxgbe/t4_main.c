@@ -494,6 +494,8 @@ CTASSERT(offsetof(struct sge_ofld_rxq, fl) == offsetof(struct sge_rxq, fl));
 CTASSERT(nitems(((struct adapter *)0)->cpl_handler) == NUM_CPL_CMDS);
 CTASSERT(nitems(((struct adapter *)0)->fw_msg_handler) == NUM_FW6_TYPES);
 
+CTASSERT(sizeof(struct cluster_metadata) <= CL_METADATA_SIZE);
+
 static int
 t4_probe(device_t dev)
 {
@@ -2355,7 +2357,6 @@ use_config_on_flash:
 
 #define LIMIT_CAPS(x) do { \
 	caps.x &= htobe16(t4_##x##_allowed); \
-	sc->x = htobe16(caps.x); \
 } while (0)
 
 	/*
@@ -2457,6 +2458,8 @@ get_params__post_init(struct adapter *sc)
 	sc->sge.eq_start = val[1];
 	sc->tids.ftid_base = val[2];
 	sc->tids.nftids = val[3] - val[2] + 1;
+	sc->params.ftid_min = val[2];
+	sc->params.ftid_max = val[3];
 	sc->vres.l2t.start = val[4];
 	sc->vres.l2t.size = val[5] - val[4] + 1;
 	KASSERT(sc->vres.l2t.size <= L2T_SIZE,
@@ -2475,7 +2478,35 @@ get_params__post_init(struct adapter *sc)
 		return (rc);
 	}
 
-	if (caps.toecaps) {
+#define READ_CAPS(x) do { \
+	sc->x = htobe16(caps.x); \
+} while (0)
+	READ_CAPS(linkcaps);
+	READ_CAPS(niccaps);
+	READ_CAPS(toecaps);
+	READ_CAPS(rdmacaps);
+	READ_CAPS(iscsicaps);
+	READ_CAPS(fcoecaps);
+
+	if (sc->niccaps & FW_CAPS_CONFIG_NIC_ETHOFLD) {
+		param[0] = FW_PARAM_PFVF(ETHOFLD_START);
+		param[1] = FW_PARAM_PFVF(ETHOFLD_END);
+		param[2] = FW_PARAM_DEV(FLOWC_BUFFIFO_SZ);
+		rc = -t4_query_params(sc, sc->mbox, sc->pf, 0, 3, param, val);
+		if (rc != 0) {
+			device_printf(sc->dev,
+			    "failed to query NIC parameters: %d.\n", rc);
+			return (rc);
+		}
+		sc->tids.etid_base = val[0];
+		sc->params.etid_min = val[0];
+		sc->tids.netids = val[1] - val[0] + 1;
+		sc->params.netids = sc->tids.netids;
+		sc->params.eo_wr_cred = val[2];
+		sc->params.ethoffload = 1;
+	}
+
+	if (sc->toecaps) {
 		/* query offload-related parameters */
 		param[0] = FW_PARAM_DEV(NTID);
 		param[1] = FW_PARAM_PFVF(SERVER_START);
@@ -2498,7 +2529,7 @@ get_params__post_init(struct adapter *sc)
 		sc->params.ofldq_wr_cred = val[5];
 		sc->params.offload = 1;
 	}
-	if (caps.rdmacaps) {
+	if (sc->rdmacaps) {
 		param[0] = FW_PARAM_PFVF(STAG_START);
 		param[1] = FW_PARAM_PFVF(STAG_END);
 		param[2] = FW_PARAM_PFVF(RQ_START);
@@ -2537,7 +2568,7 @@ get_params__post_init(struct adapter *sc)
 		sc->vres.ocq.start = val[4];
 		sc->vres.ocq.size = val[5] - val[4] + 1;
 	}
-	if (caps.iscsicaps) {
+	if (sc->iscsicaps) {
 		param[0] = FW_PARAM_PFVF(ISCSI_START);
 		param[1] = FW_PARAM_PFVF(ISCSI_END);
 		rc = -t4_query_params(sc, sc->mbox, sc->pf, 0, 2, param, val);
@@ -2622,6 +2653,7 @@ build_medialist(struct port_info *pi)
 		ifmedia_set(media, m | IFM_10G_CX4);
 		break;
 
+	case FW_PORT_TYPE_QSFP_10G:
 	case FW_PORT_TYPE_SFP:
 	case FW_PORT_TYPE_FIBER_XFI:
 	case FW_PORT_TYPE_FIBER_XAUI:
@@ -4038,6 +4070,7 @@ static void
 cxgbe_tick(void *arg)
 {
 	struct port_info *pi = arg;
+	struct adapter *sc = pi->adapter;
 	struct ifnet *ifp = pi->ifp;
 	struct sge_txq *txq;
 	int i, drops;
@@ -4049,7 +4082,7 @@ cxgbe_tick(void *arg)
 		return;	/* without scheduling another callout */
 	}
 
-	t4_get_port_stats(pi->adapter, pi->tx_chan, s);
+	t4_get_port_stats(sc, pi->tx_chan, s);
 
 	ifp->if_opackets = s->tx_frames - s->tx_pause;
 	ifp->if_ipackets = s->rx_frames - s->rx_pause;
@@ -4060,6 +4093,19 @@ cxgbe_tick(void *arg)
 	ifp->if_iqdrops = s->rx_ovflow0 + s->rx_ovflow1 + s->rx_ovflow2 +
 	    s->rx_ovflow3 + s->rx_trunc0 + s->rx_trunc1 + s->rx_trunc2 +
 	    s->rx_trunc3;
+	for (i = 0; i < 4; i++) {
+		if (pi->rx_chan_map & (1 << i)) {
+			uint32_t v;
+
+			/*
+			 * XXX: indirect reads from the same ADDR/DATA pair can
+			 * race with each other.
+			 */
+			t4_read_indirect(sc, A_TP_MIB_INDEX, A_TP_MIB_DATA, &v,
+			    1, A_TP_MIB_TNL_CNG_DROP_0 + i);
+			ifp->if_iqdrops += v;
+		}
+	}
 
 	drops = s->tx_drop;
 	for_each_txq(pi, i, txq)
@@ -4205,6 +4251,10 @@ t4_sysctls(struct adapter *sc)
 	 */
 	oid = device_get_sysctl_tree(sc->dev);
 	c0 = children = SYSCTL_CHILDREN(oid);
+
+	sc->sc_do_rxcopy = 1;
+	SYSCTL_ADD_INT(ctx, children, OID_AUTO, "do_rx_copy", CTLFLAG_RW,
+	    &sc->sc_do_rxcopy, 1, "Do RX copy of small frames");
 
 	SYSCTL_ADD_INT(ctx, children, OID_AUTO, "nports", CTLFLAG_RD, NULL,
 	    sc->params.nports, "# of ports");
@@ -4483,6 +4533,7 @@ cxgbe_sysctls(struct port_info *pi)
 	struct sysctl_ctx_list *ctx;
 	struct sysctl_oid *oid;
 	struct sysctl_oid_list *children;
+	struct adapter *sc = pi->adapter;
 
 	ctx = device_get_sysctl_ctx(pi->dev);
 
@@ -4515,7 +4566,7 @@ cxgbe_sysctls(struct port_info *pi)
 	    "Reserve queue 0 for non-flowid packets");
 
 #ifdef TCP_OFFLOAD
-	if (is_offload(pi->adapter)) {
+	if (is_offload(sc)) {
 		SYSCTL_ADD_INT(ctx, children, OID_AUTO, "nofldrxq", CTLFLAG_RD,
 		    &pi->nofldrxq, 0,
 		    "# of rx queues for offloaded TCP connections");
@@ -4554,7 +4605,7 @@ cxgbe_sysctls(struct port_info *pi)
 
 #define SYSCTL_ADD_T4_REG64(pi, name, desc, reg) \
 	SYSCTL_ADD_OID(ctx, children, OID_AUTO, name, \
-	    CTLTYPE_U64 | CTLFLAG_RD, pi->adapter, reg, \
+	    CTLTYPE_U64 | CTLFLAG_RD, sc, reg, \
 	    sysctl_handle_t4_reg64, "QU", desc)
 
 	SYSCTL_ADD_T4_REG64(pi, "tx_octets", "# of octets in good frames",
@@ -6143,6 +6194,11 @@ sysctl_tids(SYSCTL_HANDLER_ARGS)
 		    t->ftid_base + t->nftids - 1);
 	}
 
+	if (t->netids) {
+		sbuf_printf(sb, "ETID range: %u-%u\n", t->etid_base,
+		    t->etid_base + t->netids - 1);
+	}
+
 	sbuf_printf(sb, "HW TID usage: %u IP users, %u IPv6 users",
 	    t4_read_reg(sc, A_LE_DB_ACT_CNT_IPV4),
 	    t4_read_reg(sc, A_LE_DB_ACT_CNT_IPV6));
@@ -7174,14 +7230,17 @@ t4_filter_rpl(struct sge_iq *iq, const struct rss_header *rss, struct mbuf *m)
 	struct adapter *sc = iq->adapter;
 	const struct cpl_set_tcb_rpl *rpl = (const void *)(rss + 1);
 	unsigned int idx = GET_TID(rpl);
+	unsigned int rc;
+	struct filter_entry *f;
 
 	KASSERT(m == NULL, ("%s: payload with opcode %02x", __func__,
 	    rss->opcode));
 
-	if (idx >= sc->tids.ftid_base &&
-	    (idx -= sc->tids.ftid_base) < sc->tids.nftids) {
-		unsigned int rc = G_COOKIE(rpl->cookie);
-		struct filter_entry *f = &sc->tids.ftid_tab[idx];
+	if (is_ftid(sc, idx)) {
+
+		idx -= sc->tids.ftid_base;
+		f = &sc->tids.ftid_tab[idx];
+		rc = G_COOKIE(rpl->cookie);
 
 		mtx_lock(&sc->tids.ftid_lock);
 		if (rc == FW_FILTER_WR_FLT_ADDED) {
@@ -7754,11 +7813,11 @@ t4_ioctl(struct cdev *dev, unsigned long cmd, caddr_t data, int fflag,
 
 		if (port_id >= sc->params.nports)
 			return (EINVAL);
+		pi = sc->port[port_id];
 
 		/* MAC stats */
-		t4_clr_port_stats(sc, port_id);
+		t4_clr_port_stats(sc, pi->tx_chan);
 
-		pi = sc->port[port_id];
 		if (pi->flags & PORT_INIT_DONE) {
 			struct sge_rxq *rxq;
 			struct sge_txq *txq;
