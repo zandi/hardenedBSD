@@ -647,14 +647,6 @@ cpu_flush_dcache(void *ptr, size_t len)
 	/* TBD */
 }
 
-void
-cpu_initclocks(void)
-{
-
-	decr_tc_init();
-	cpu_initclocks_bsp();
-}
-
 /*
  * Shutdown the CPU as much as possible.
  */
@@ -784,6 +776,13 @@ va_to_vsid(pmap_t pm, vm_offset_t va)
 }
 
 #endif
+
+vm_offset_t
+pmap_early_io_map(vm_paddr_t pa, vm_size_t size)
+{
+
+	return (pa);
+}
 
 /* From p3-53 of the MPC7450 RISC Microprocessor Family Reference Manual */
 void
