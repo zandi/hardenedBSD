@@ -54,12 +54,13 @@ aic79xx_reg_print.o		optional ahd pci ahd_reg_pretty_print	   \
 # The 'fdt_dtb_file' target covers an actual DTB file name, which is derived
 # from the specified source (DTS) file: <platform>.dts -> <platform>.dtb
 #
-fdt_dtb_file			optional fdt \
-	compile-with "if [ -f $S/boot/fdt/dts/${FDT_DTS_FILE} ]; then dtc -O dtb -o ${FDT_DTS_FILE:R}.dtb -b 0 -p 1024 $S/boot/fdt/dts/${FDT_DTS_FILE}; fi" \
+fdt_dtb_file			optional fdt fdt_dtb_static \
+	compile-with "sh $S/tools/fdt/make_dtb.sh $S ${FDT_DTS_FILE} ${.CURDIR}/${FDT_DTS_FILE:R}.dtb" \
 	no-obj no-implicit-rule before-depend	\
 	clean		"${FDT_DTS_FILE:R}.dtb"
 fdt_static_dtb.h		optional fdt fdt_dtb_static \
-	compile-with "sh $S/tools/fdt/make_dtbh.sh ${FDT_DTS_FILE} ." \
+	compile-with "sh $S/tools/fdt/make_dtbh.sh ${FDT_DTS_FILE} ${.CURDIR}" \
+	dependency	"fdt_dtb_file" \
 	no-obj no-implicit-rule before-depend \
 	clean		"fdt_static_dtb.h"
 feeder_eq_gen.h			optional sound				   \
@@ -1404,12 +1405,9 @@ dev/fb/fbd.c			optional fbd | vt
 dev/fb/fb_if.m			standard
 dev/fb/splash.c			optional sc splash
 dev/fdt/fdt_common.c		optional fdt
-dev/fdt/fdt_ic_if.m		optional fdt
-dev/fdt/fdt_pci.c		optional fdt pci
 dev/fdt/fdt_slicer.c		optional fdt cfi | fdt nand
 dev/fdt/fdt_static_dtb.S	optional fdt fdt_dtb_static \
-	dependency	"$S/boot/fdt/dts/${FDT_DTS_FILE}"
-dev/fdt/fdtbus.c		optional fdtbus
+	dependency	"$S/boot/fdt/dts/${MACHINE}/${FDT_DTS_FILE}"
 dev/fdt/simplebus.c		optional fdt
 dev/fe/if_fe.c			optional fe
 dev/fe/if_fe_pccard.c		optional fe pccard
@@ -1440,6 +1438,7 @@ dev/gpio/gpioiic.c		optional gpioiic
 dev/gpio/gpioled.c		optional gpioled
 dev/gpio/gpio_if.m		optional gpio
 dev/gpio/gpiobus_if.m		optional gpio
+dev/gpio/ofw_gpiobus.c		optional fdt gpio
 dev/hatm/if_hatm.c		optional hatm pci
 dev/hatm/if_hatm_intr.c		optional hatm pci
 dev/hatm/if_hatm_ioctl.c	optional hatm pci
@@ -1969,7 +1968,7 @@ dev/ofw/ofw_bus_subr.c		optional fdt
 dev/ofw/ofw_fdt.c		optional fdt
 dev/ofw/ofw_if.m		optional fdt
 dev/ofw/ofw_iicbus.c		optional fdt iicbus
-dev/ofw/ofw_nexus.c		optional fdt
+dev/ofw/ofwbus.c		optional fdt
 dev/ofw/openfirm.c		optional fdt
 dev/ofw/openfirmio.c		optional fdt
 dev/patm/if_patm.c		optional patm pci
