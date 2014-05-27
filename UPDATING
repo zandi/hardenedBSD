@@ -16,12 +16,6 @@ from older versions of FreeBSD, try WITHOUT_CLANG to bootstrap to the tip of
 stable/10, and then rebuild without this option. The bootstrap process from
 older version of current is a bit fragile.
 
-2014XXXX:
-	Added PAX ASLR and Segvguard. You can enable them by adding
-	 options PAX_ASLR
-	 options PAX_SEGVGUARD
-	to relevant kernel config.
-
 20140321:
 	Clang and llvm have been upgraded to 3.4 release.
 
