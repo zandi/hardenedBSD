@@ -3,6 +3,10 @@
 	"../../../share/xml/freebsd50.dtd" [
 <!ENTITY % release PUBLIC "-//FreeBSD//ENTITIES Release Specification//EN" "release.ent">
  %release;
+<!ENTITY % sponsor PUBLIC "-//FreeBSD//ENTITIES Sponsor Specification//EN" "sponsor.ent">
+ %sponsor;
+<!ENTITY % vendor PUBLIC "-//FreeBSD//ENTITIES Vendor Specification//EN" "vendor.ent">
+ %vendor;
 ]>
 <article xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0">
 <info>
@@ -126,7 +130,8 @@
       which should be resolved due to several change in the VM
       subsystem.</para>
 
-    <para revision="260385">The &man.geom.4; RAID driver has been
+    <para revision="260385" contrib="sponsor" sponsor="&ix;">The
+      &man.geom.4; RAID driver has been
       updated to support unmapped I/O.</para>
 
     <para revision="260431">A new &man.sysctl.8;,
@@ -134,11 +139,13 @@
       which allows controlling how long the system will wait after
       &man.panic.9; before rebooting.</para>
 
-    <para revision="265388">The &man.mpr.4; device has been added,
+    <para revision="265388" contrib="sponsor" sponsor="&lsi;">The
+      &man.mpr.4; device has been added,
       providing support for LSI Fusion-MPT 3 12Gb SCSI/SATA
       controllers.</para>
 
-    <para revision="265922">The &man.mrsas.4; driver has been added,
+    <para revision="265922" contrib="sponsor" sponsor="&lsi;">The
+      &man.mrsas.4; driver has been added,
       providing support for LSI MegaRAID SAS controllers.  The
       &man.mfi.4; driver will attach to the controller, by default.
       To enable &man.mrsas.4; add
@@ -225,7 +232,8 @@
   <sect2 xml:id="userland">
     <title>Userland Changes</title>
 
-    <para revision="260177">A new flag is added to &man.camcontrol.8;,
+    <para revision="260177" contrib="sponsor"
+      sponsor="&netflix;">A new flag is added to &man.camcontrol.8;,
       <literal>-b</literal>, which outputs the existing buses and
       their parents.</para>
 
@@ -240,11 +248,22 @@
       to filter by &man.jail.8; ID or name, in followup to the
       &man.ps.1; change in <literal>r265229</literal>.</para>
 
+    <para revision="266890">The &man.pmcstat.8; utility has been
+      updated to include a new flag, <literal>-l</literal>, which
+      ends event collection after the specified number of
+      seconds.</para>
+
     <para revision="267113">The default &man.newsyslog.conf.5; now
       includes files in the
       <filename>/etc/newsyslog.conf.d/</filename> and
       <filename>/usr/local/etc/newsyslog.conf.d/</filename>
       directories by default for &man.newsyslog.8;.</para>
+
+    <para revision="267236">A new flag, <quote>onifconsole</quote> has
+      been added to <filename>/etc/ttys</filename>.  This allows the
+      system to provide a login prompt via serial console if the
+      device is an active kernel console, otherwise it is equivalent
+      to <literal>off</literal>.</para>
 
     <sect3 xml:id="rc-scripts">
       <title><filename>/etc/rc.d</filename> Scripts</title>
@@ -263,6 +282,8 @@
     <para revision="266692"><application>Sendmail</application>
       has been updated to 8.14.9.</para>
 
+    <para revision="267258"><application>OpenSSL</application> has
+      been updated to version 1.0.1h.</para>
   </sect2>
 
   <sect2 xml:id="ports">
