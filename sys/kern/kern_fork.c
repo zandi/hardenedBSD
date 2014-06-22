@@ -41,7 +41,6 @@ __FBSDID("$FreeBSD$");
 #include "opt_ktrace.h"
 #include "opt_kstack_pages.h"
 #include "opt_procdesc.h"
-#include "opt_pax.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,10 +86,6 @@ __FBSDID("$FreeBSD$");
 #ifdef KDTRACE_HOOKS
 #include <sys/dtrace_bsd.h>
 dtrace_fork_func_t	dtrace_fasttrap_fork;
-#endif
-
-#if defined(PAX_ASLR) || defined(PAX_SEGVGUARD)
-#include <sys/pax.h>
 #endif
 
 SDT_PROVIDER_DECLARE(proc);
@@ -771,15 +766,6 @@ fork1(struct thread *td, int flags, int pages, struct proc **procp,
 	static struct timeval lastfail;
 #ifdef PROCDESC
 	struct file *fp_procdesc = NULL;
-#endif
-
-#ifdef PAX_SEGVGUARD
-	if (td->td_proc->p_pid != 0) {
-		error = pax_segvguard(curthread, curthread->td_proc->p_textvp, 
-				td->td_proc->p_comm, PAX_SEGVGUARD_NOTCRASHED);
-		if (error)
-			return (error);
-	}
 #endif
 
 	/* Check for the undefined or unimplemented flags. */
