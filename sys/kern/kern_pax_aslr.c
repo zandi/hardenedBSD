@@ -511,8 +511,8 @@ pax_get_flags(struct proc *proc, uint32_t *flags)
 		/*
 		 * indicate flags inconsistencies in dmesg and in user terminal
 		 */
-		pax_log_aslr(__func__, "inconsistent paxflags: %x\n", *flags);
-		pax_ulog_aslr(NULL, "inconsistent paxflags: %x\n", *flags);
+		printf(__func__, "inconsistent paxflags: %x\n", *flags);
+		uprintf(NULL, "inconsistent paxflags: %x\n", *flags);
 
 		return (1);
 	}
@@ -547,27 +547,11 @@ pax_aslr_active(struct proc *proc)
 		 */
 		return (true);
 
-	if ((status == PAX_ASLR_OPTIN) && (flags & PAX_NOTE_ASLR) == 0) {
-		/*
-		 * indicate option inconsistencies in dmesg and in user terminal
-		 */
-		pax_log_aslr(__func__,
-		    "ASLR is opt-in, and executable does not have ASLR enabled\n");
-		pax_ulog_aslr(NULL,
-		    "ASLR is opt-in, and executable does not have ASLR enabled\n");
+	if ((status == PAX_ASLR_OPTIN) && (flags & PAX_NOTE_ASLR) == 0)
 		return (false);
-	}
 
-	if ((status == PAX_ASLR_OPTOUT) && (flags & PAX_NOTE_NOASLR) != 0) {
-		/*
-		 * indicate option inconsistencies in dmesg and in user terminal
-		 */
-		pax_log_aslr(__func__,
-		    "ASLR is opt-out, and executable explicitly disabled ASLR\n");
-		pax_ulog_aslr(NULL,
-		    "ASLR is opt-out, and executable explicitly disabled ASLR\n");
+	if ((status == PAX_ASLR_OPTOUT) && (flags & PAX_NOTE_NOASLR) != 0)
 		return (false);
-	}
 
 	return (true);
 }

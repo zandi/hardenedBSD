@@ -198,9 +198,6 @@ extern int pax_aslr_compat_stack_len;
 extern int pax_aslr_compat_exec_len;
 #endif /* COMPAT_FREEBSD32 */
 
-extern int pax_log_log;
-extern int pax_log_ulog;
-
 #define ELF_NOTE_TYPE_PAX_TAG   3
 #define PAX_NOTE_MPROTECT   0x01
 #define PAX_NOTE_NOMPROTECT 0x02
@@ -208,9 +205,6 @@ extern int pax_log_ulog;
 #define PAX_NOTE_NOGUARD    0x08
 #define PAX_NOTE_ASLR       0x10
 #define PAX_NOTE_NOASLR     0x20
-
-#define PAX_LOG_LOG		0
-#define PAX_LOG_ULOG		0
 
 void pax_init(void);
 void pax_init_prison(struct prison *pr);
@@ -223,9 +217,6 @@ void pax_aslr_mmap(struct proc *p, vm_offset_t *addr,
 void pax_aslr_stack(struct thread *td, uintptr_t *addr);
 struct prison *pax_get_prison(struct proc *proc);
 void pax_elf(struct image_params *, uint32_t);
-
-void pax_log_aslr(const char *func, const char *fmt, ...);
-void pax_ulog_aslr(const char *func, const char *fmt, ...);
 
 #endif /* _KERNEL */
 

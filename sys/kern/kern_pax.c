@@ -159,9 +159,6 @@ pax_init(void)
 	printf("[PAX ASLR (compat)] stack: %d bit\n", pax_aslr_compat_stack_len);
 #endif /* COMPAT_FREEBSD32 */
 #endif /* PAX_ASLR */
-
-	printf("[PAX LOG] logging to system: %d\n", pax_log_log);
-	printf("[PAX LOG] logging to user: %d\n", pax_log_ulog);
 }
 SYSINIT(pax, SI_SUB_PAX, SI_ORDER_FIRST, pax_init, NULL);
 
