@@ -511,8 +511,8 @@ pax_get_flags(struct proc *proc, uint32_t *flags)
 		/*
 		 * indicate flags inconsistencies in dmesg and in user terminal
 		 */
-		printf(__func__, "inconsistent paxflags: %x\n", *flags);
-		uprintf(NULL, "inconsistent paxflags: %x\n", *flags);
+		printf("%s: inconsistent paxflags: %x\n", __func__, *flags);
+		uprintf("inconsistent paxflags: %x\n", *flags);
 
 		return (1);
 	}
