@@ -31,7 +31,6 @@ PORTSDIR?=	/usr/ports
 DOCDIR?=	/usr/doc
 RELNOTES_LANG?= en_US.ISO8859-1
 XZCMD?=		/usr/bin/xz
-KERNCONF?=	GENERIC
 
 .if !defined(TARGET) || empty(TARGET)
 TARGET=		${MACHINE}
@@ -124,8 +123,7 @@ base.txz:
 
 kernel.txz:
 	mkdir -p ${DISTDIR}
-	cd ${WORLDDIR} && ${IMAKE} distributekernel packagekernel \
-		DISTDIR=${.OBJDIR}/${DISTDIR} KERNCONF=${KERNCONF}
+	cd ${WORLDDIR} && ${IMAKE} distributekernel packagekernel DISTDIR=${.OBJDIR}/${DISTDIR}
 	mv ${DISTDIR}/kernel*.txz .
 
 src.txz:
