@@ -16,6 +16,24 @@ from older versions of FreeBSD, try WITHOUT_CLANG to bootstrap to the tip of
 stable/10, and then rebuild without this option. The bootstrap process from
 older version of current is a bit fragile.
 
+20140814:
+	The ixgbe tunables now match their sysctl counterparts, for example:
+	hw.ixgbe.enable_aim => hw.ix.enable_aim
+	Anyone using ixgbe tunables should ensure they update /boot/loader.conf.
+
+20140801:
+	The NFSv4.1 server committed by r269398 changes the internal
+	function call interfaces used between the NFS and krpc modules.
+	As such, __FreeBSD_version was bumped.
+
+20140729:
+	The default unbound configuration has been modified to address
+	issues with reverse lookups on networks that use private
+	address ranges.  If you use the local_unbound service, run
+	"service local_unbound setup" as root to regenerate your
+	configuration, then "service local_unbound reload" to load the
+	new configuration.
+
 20140717:
 	It is no longer necessary to include the dwarf version in your DEBUG
 	options in your kernel config file. The bug that required it to be
