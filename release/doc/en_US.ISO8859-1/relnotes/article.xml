@@ -918,10 +918,12 @@
       <para revision="268161">The &man.mkimg.1; utility has been
 	merged from &os;-CURRENT.</para>
 
-      <para revision="268700">The &man.camcontrol.8; has been updated
-	to include a new <literal>persist</literal> command, which
-	allows issuing <command>SCSI PERSISTENT RESERVE IN</command>
-	and <command>SCSI PERSISTENT RESERVE OUT</command>.</para>
+      <para revision="268700" contrib="sponsor"
+	sponsor="&spectralogic;">The &man.camcontrol.8; has been
+	updated to include a new <literal>persist</literal> command,
+	which allows issuing <command>SCSI PERSISTENT RESERVE
+	  IN</command> and <command>SCSI PERSISTENT RESERVE
+	  OUT</command>.</para>
 
       <para revision="268791">The &man.gstat.8; utility has been
 	updated to include a new flag, <literal>-p</literal>, which
@@ -976,8 +978,9 @@
 	</listitem>
       </itemizedlist>
 
-      <para revision="269398">The &man.nfsd.8; server update to 4.1
-	has merged from &os;-CURRENT.</para>
+      <para revision="269398">The &man.nfsd.8; server update to 4.1,
+	adding support for RFC5661, has merged from
+	&os;-CURRENT.</para>
 
       <para revision="269432" arch="ia64">The serial terminals
 	<filename>ttyu0</filename> and <filename>ttyu1</filename> have
@@ -1019,6 +1022,11 @@
 	argument to the <literal>-o</literal> flag.  For example, to
 	specify NFS version 4, the syntax to use is
 	<literal>-o&nbsp;vers=4</literal>.</para>
+
+      <para revision="270242" contrib="sponsor"
+	sponsor="&spectralogic;">The &man.devd.8; client socket type
+	has been changed to <literal>SOCK_SEQPACKET</literal>,
+	providing sequential packet support.</para>
 
       <para revision="270401">Support for the <quote>account</quote>
 	facility has been added to the &man.pam.group.8;
