@@ -778,13 +778,13 @@ END(ssdtosd)
 
 /* void reset_dbregs() */
 ENTRY(reset_dbregs)
-	movl    $0,%eax
-	movl    %eax,%dr7     /* disable all breapoints first */
-	movl    %eax,%dr0
-	movl    %eax,%dr1
-	movl    %eax,%dr2
-	movl    %eax,%dr3
-	movl    %eax,%dr6
+	movl	$0,%eax
+	movl	%eax,%dr7	/* disable all breakpoints first */
+	movl	%eax,%dr0
+	movl	%eax,%dr1
+	movl	%eax,%dr2
+	movl	%eax,%dr3
+	movl	%eax,%dr6
 	ret
 END(reset_dbregs)
 
