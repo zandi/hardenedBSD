@@ -117,10 +117,10 @@ struct vt_device {
 	struct vt_window	*vd_markedwin;	/* (?) Copy/paste buf owner. */
 	const struct vt_driver	*vd_driver;	/* (c) Graphics driver. */
 	void			*vd_softc;	/* (u) Driver data. */
-	uint16_t		 vd_mx;		/* (?) Mouse X. */
-	uint16_t		 vd_my;		/* (?) Mouse Y. */
-	vt_axis_t		 vd_mdirtyx;	/* (?) Screen width. */
-	vt_axis_t		 vd_mdirtyy;	/* (?) Screen height. */
+	uint16_t		 vd_mx;		/* (?) Current mouse X. */
+	uint16_t		 vd_my;		/* (?) current mouse Y. */
+	vt_axis_t		 vd_moldx;	/* (?) Mouse X as of last redraw. */
+	vt_axis_t		 vd_moldy;	/* (?) Mouse Y as of last redraw. */
 	uint32_t		 vd_mstate;	/* (?) Mouse state. */
 	term_pos_t		 vd_offset;	/* (?) Pixel offset. */
 	vt_axis_t		 vd_width;	/* (?) Screen width. */
@@ -128,6 +128,7 @@ struct vt_device {
 	struct mtx		 vd_lock;	/* Per-device lock. */
 	struct cv		 vd_winswitch;	/* (d) Window switch notify. */
 	struct callout		 vd_timer;	/* (d) Display timer. */
+	volatile unsigned int	 vd_timer_armed;/* (?) Display timer started.*/
 	int			 vd_flags;	/* (d) Device flags. */
 #define	VDF_TEXTMODE	0x01	/* Do text mode rendering. */
 #define	VDF_SPLASH	0x02	/* Splash screen active. */
@@ -191,7 +192,7 @@ void vtbuf_cursor_position(struct vt_buf *, const term_pos_t *);
 void vtbuf_scroll_mode(struct vt_buf *vb, int yes);
 void vtbuf_undirty(struct vt_buf *, term_rect_t *, struct vt_bufmask *);
 void vtbuf_sethistory_size(struct vt_buf *, int);
-int vtbuf_iscursor(struct vt_buf *vb, int row, int col);
+int vtbuf_iscursor(const struct vt_buf *vb, int row, int col);
 void vtbuf_cursor_visibility(struct vt_buf *, int);
 #ifndef SC_NO_CUTPASTE
 void vtbuf_mouse_cursor_position(struct vt_buf *vb, int col, int row);
