@@ -552,8 +552,34 @@
 	  significantly improved its performance and
 	  <acronym>SMP</acronym> scapability.</para>
 
-	<para>New kernel-based iSCSI target and initiator code took
-	  many fixes and performance optimizations.</para>
+	<para revision="269065" contrib="sponsor" sponsor="&ff;">The
+	  <acronym>iSCSI</acronym> initiator has been updated to
+	  support redirection handling when an
+	  <acronym>iSCSI</acronym> device is configured with multiple
+	  <acronym>IP</acronym> addresses across different network
+	  interfaces.  Previously, clients connecting to
+	  such <acronym>iSCSI</acronym> devices could require
+	  additional client-side configuration.</para>
+
+	<para revision="265523" contrib="sponsor" sponsor="&ff;">A new
+	  &man.sysctl.8;,
+	  <literal>kern.iscsi.fail_on_disconnection</literal>, has
+	  been added, which allows <acronym>iSCSI</acronym> clients to
+	  remove the attached disk device when the connection to the
+	  target is dropped, where previously I/O would stop until the
+	  connection is restored.</para>
+
+	<para revision="265524" contrib="sponsor" sponsor="&ff;">The
+	  <acronym>iSCSI</acronym> transmit code has been optimized
+	  to coalesce <acronym>PDUs</acronym> and avoid lock
+	  contention.</para>
+
+	<para revision="265524" contrib="sponsor"
+	  sponsor="&ix;">Several performance optimizations have been
+	  made to the <acronym>iSCSI</acronym> subsystem, including
+	  deferring wakeup until enough data has been received to
+	  read or write a file, reducing <acronym>CPU</acronym> usage
+	  and throughput performance with large I/O workloads.</para>
       </sect3>
 
       <sect3 xml:id="disks">
@@ -562,10 +588,10 @@
 	<para revision="260385" contrib="sponsor" sponsor="&ix;">The
 	  &man.geom.4; subsystem has been updated to support I/O
 	  direct dispatch.  When safety requirements are met, it
-	  allows to avoid passing I/O requests to GEOM
+	  enables avoiding passing I/O requests to GEOM
 	  <literal>g_up</literal>/<literal>g_down</literal> thread,
-	  executing them directly in the caller context.  That allows
-	  to avoid CPU bottlenecks in
+	  executing them directly in the caller context, avoiding
+	  CPU bottlenecks in
 	  <literal>g_up</literal>/<literal>g_down</literal> threads,
 	  plus avoid several context switches per I/O.</para>
 
@@ -575,9 +601,9 @@
 
 	<para revision="260387" contrib="sponsor" sponsor="&ix;">The
 	  &man.cam.4; subsystem has been updated to support
-	  finer-grained locking, direct dispatch and multi-queue.
-	  Combined with &man.geom.4; direct dispatch that allows to
-	  reduce lock congestion and improve <acronym>SMP</acronym>
+	  finer-grained locking, direct dispatch and multi-queue,
+	  which combined with &man.geom.4; direct dispatch, reduces
+	  lock congestion and improves <acronym>SMP</acronym>
 	  scalability of the SCSI/ATA stack.</para>
 
 	<para revision="260478">The &man.geom.8;
@@ -731,6 +757,10 @@
 	      integration for better performance.</para>
 	  </listitem>
 	</itemizedlist>
+
+	<para revision="270810" contrib="vendor"
+	  vendor="&highpoint;">The &man.hptnr.4; driver has been
+	  updated to version 1.0.1.</para>
       </sect3>
 
       <sect3 xml:id="fs">
@@ -813,6 +843,16 @@
 	  multi-threaded soft updates.  Previously, soft updates were
 	  handled by a single thread, and as of this change, now have
 	  one thread per <acronym>FFS</acronym> mountpoint.</para>
+
+	<para revision="270892" contrib="sponsor" sponsor="&ff;">The
+	  new filesystem automount facility, &man.autofs.5;, has been
+	  merged from &os;-CURRENT.  The new &man.autofs.5; facility
+	  is similar to that found in other &unix;-like operating
+	  systems, such as OS&nbsp;X&trade; and Solaris&trade;.  The
+	  &man.autofs.5; facility uses a &sun;-compatible
+	  &man.auto.master.5; configuration file, and is administered
+	  with the &man.automount.8; userland utility, and the
+	  &man.automountd.8; and &man.autounmountd.8; daemons.</para>
       </sect3>
     </sect2>
 
@@ -836,7 +876,10 @@
 	location of the file.</para>
 
       <para revision="262855">The <application>ATF</application> test
-	suite has been updated to version 0.20.</para>
+	suite has been updated to version 0.20.  The test suite is
+	disabled by default in &os;&nbsp;10.1, and can be enabled by
+	adding <literal>WITH_TESTS=yes</literal> to
+	&man.src.conf.5;.</para>
 
       <para revision="263019">The <literal>libucl</literal> library
 	(Unified Configuration Library) has been merged from
@@ -1133,6 +1176,21 @@
       <para revision="270401">Support for the <quote>account</quote>
 	facility has been added to the &man.pam.group.8;
 	module.</para>
+
+      <para revision="270890">The &man.pathchk.1; utility has been
+	updated to ensure bytes greater than or equal to 128 are
+	considered non-portable.</para>
+
+      <para revision="270997" contrib="vendor" vendor="&freenas;">The
+	&man.zdb.8; utility is now included in the set of applications
+	installed in the <filename
+	  class="directory">/rescue</filename> environment, making it
+	possible to examine &man.zfs.8; filesystems when <filename
+	  class="directory">/usr</filename> is unavailable.</para>
+
+      <para>Several <literal>libc</literal> improvements have been
+	merged from illumos&trade; and &apple;, providing better
+	internationalization support and &posix; compliance.</para>
 
       <sect3 xml:id="rc-scripts">
 	<title><filename>/etc/rc.d</filename> Scripts</title>
