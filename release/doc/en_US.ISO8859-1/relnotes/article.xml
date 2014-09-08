@@ -197,6 +197,39 @@
       <para revision="271069">The &man.asmc.4; driver has been updated
 	to support the &apple;&nbsp;Mac Mini 3,1.</para>
 
+      <para revision="271111">The &os;/&arch.powerpc64; default kernel
+	configuration, <filename>GENERIC64</filename>, has been
+	updated to enable the &man.vt.4; console driver for the
+	Sony&reg;&nbsp;Playstation&nbsp;3&trade; platform.</para>
+
+      <para revision="271116" contrib="sponsor" sponsor="&ff;">The
+	&os;/&arch.powerpc; <literal>ofwfb</literal> driver, used to
+	provide a graphics console when the &man.vt.4; console driver
+	is used, has been modified to work with the <filename
+	  role="package">x11-drivers/xf86-video-scfb</filename>
+	port.</para>
+
+      <note>
+	<para>If using an <acronym>ATI</acronym> graphics card with
+	  the &man.vt.4; driver, the <filename
+	    role="package">x11-servers/xorg-server</filename> package
+	  must be updated to version 1.12.4_8 or newer.</para>
+      </note>
+
+      <para revision="271128" contrib="sponsor" sponsor="&ff;">Several
+	performance enchancements to the &man.vt.4; driver have been
+	merged from &os;-CURRENT.</para>
+
+      <para revision="271153">The default stack size
+	(<literal>KSTACK_PAGES</literal>) has been increased from
+	<literal>4</literal> to <literal>8</literal> for the
+	&arch.powerpc64; architecture.</para>
+
+      <para revision="271205">The &os;/&arch.powerpc; ATI driver
+	has been updated to support enabling and disabling the
+	Radeon&nbsp;9700 backlight, found in the
+	&apple;&nbsp;PowerBook&trade;&nbsp;G4.</para>
+
       <sect3 xml:id="kernel-virtualization">
 	<title>Virtualization Support</title>
 
@@ -377,6 +410,44 @@
 	  &man.loader.conf.5; as a comma- or space-separated list.  By
 	  default, <literal>kernel</literal> and
 	  <literal>kernel.old</literal> are listed.</para>
+
+	<para revision="271130" contrib="sponsor" sponsor="&ff;">The
+	  <filename class="directory">sys/boot/</filename> sources
+	  have been rearranged, moving &man.libstand.3; to a directory
+	  indicating the library is built as 32-bit.</para>
+
+	<para revision="271135" contrib="sponsor" sponsor="&ff;">The
+	  &man.libstand.3; library has been updated to produce
+	  a 64-bit shared library for the &os;/&arch.amd64; and
+	  &os;/&arch.powerpc64; architectures.</para>
+
+	<para revision="271135" contrib="sponsor"
+	  sponsor="&ff;">Initial support for <acronym>UEFI</acronym>
+	  boot has been added.</para>
+
+	<para revision="271136" contrib="sponsor" sponsor="&ff;">Three
+	  new files are installed to <filename
+	    class="directory">/boot</filename>, supporting
+	  <acronym>UEFI</acronym> boot:</para>
+
+	<itemizedlist>
+	  <listitem>
+	    <para><filename>boot1.efi</filename>: The
+	      <acronym>UEFI</acronym> first stage bootstrap
+	      file.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para><filename>boot1.efifat</filename>:
+	      A <acronym>FAT</acronym> filesystem image containing
+	      an <acronym>EFI</acronym> system partition.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para><filename>loader.efi</filename>: The third stage
+	      bootstrap file.</para>
+	  </listitem>
+	</itemizedlist>
       </sect3>
 
       <sect3 xml:id="proc">
@@ -583,6 +654,22 @@
 	  deferring wakeup until enough data has been received to
 	  read or write a file, reducing <acronym>CPU</acronym> usage
 	  and throughput performance with large I/O workloads.</para>
+
+	<para revision="263720" contrib="sponsor"
+	  sponsor="&ff;">Support for hostname- and IP-based access
+	  restriction has been added to the <acronym>iSCSI</acronym>
+	  &man.ctld.8; daemon.</para>
+
+	<para revision="263725" contrib="sponsor"
+	  sponsor="&ff;">The &man.ctld.8; daemon has been updated
+	  to allow overriding the <quote>default</quote>
+	  <literal>portal-group</literal> configuration.</para>
+
+	<para revision="263726" contrib="sponsor"
+	  sponsor="&ff;">The &man.ctld.8; daemon now includes a new
+	  <literal>auth-group</literal>, <quote>default</quote>,
+	  defaulting to <literal>deny</literal>, which is possible
+	  to override.</para>
       </sect3>
 
       <sect3 xml:id="disks">
@@ -764,6 +851,11 @@
 	<para revision="270810" contrib="vendor"
 	  vendor="&highpoint;">The &man.hptnr.4; driver has been
 	  updated to version 1.0.1.</para>
+
+	<para revision="271234">The &man.mrsas.4; driver has been
+	  added to the <filename>GENERIC</filename> kernel
+	  configuration on &arch.amd64; and &arch.i386;
+	  architectures.</para>
       </sect3>
 
       <sect3 xml:id="fs">
@@ -1224,6 +1316,18 @@
 	  script now generates <literal>ED25519</literal> &man.sshd.8;
 	  host keys if keys do not already exist when
 	  <literal>ssh_keygen_alg()</literal> is invoked.</para>
+
+	<para revision="271095">Support for &man.vt.4; keyboard maps
+	  has been added to the <filename>syscons</filename>
+	  &man.rc.d.8; startup script.</para>
+
+	<para revision="271260">Support for subdirectories within
+	  <filename
+	    class="directory">/etc/rc.conf.d/<replaceable>service</replaceable>/</filename>
+	  has been added the &man.rc.d.8;.  This allows creating
+	  separate configuration files for services such as
+	  <filename>netif</filename>, for example, where each network
+	  interface can have a separate configuration file.</para>
       </sect3>
     </sect2>
 
