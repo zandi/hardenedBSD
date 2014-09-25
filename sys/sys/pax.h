@@ -37,6 +37,7 @@
 struct image_params;
 struct prison;
 struct thread;
+struct proc;
 struct vnode;
 struct vmspace;
 struct vm_offset_t;
@@ -44,10 +45,18 @@ struct vm_offset_t;
 /*
  * used in sysctl handler
  */
-#define PAX_ASLR_DISABLED	0
-#define PAX_ASLR_OPTIN		1
-#define PAX_ASLR_OPTOUT		2
-#define PAX_ASLR_FORCE_ENABLED	3
+#define	PAX_FEATURE_DISABLED		0
+#define	PAX_FEATURE_OPTIN		1
+#define	PAX_FEATURE_OPTOUT		2
+#define	PAX_FEATURE_FORCE_ENABLED	3
+#define	PAX_FEATURE_UNKNOWN_STATUS	4
+
+extern const char *pax_status_str[];
+
+#define PAX_FEATURE_SIMPLE_DISABLED	0
+#define PAX_FEATURE_SIMPLE_ENABLED	1
+
+extern const char *pax_status_simple_str[];
 
 #ifndef PAX_ASLR_DELTA
 #define	PAX_ASLR_DELTA(delta, lsb, len)	\
@@ -198,25 +207,41 @@ extern int pax_aslr_compat_stack_len;
 extern int pax_aslr_compat_exec_len;
 #endif /* COMPAT_FREEBSD32 */
 
-#define ELF_NOTE_TYPE_PAX_TAG   3
-#define PAX_NOTE_MPROTECT   0x01
-#define PAX_NOTE_NOMPROTECT 0x02
-#define PAX_NOTE_GUARD      0x04
-#define PAX_NOTE_NOGUARD    0x08
-#define PAX_NOTE_ASLR       0x10
-#define PAX_NOTE_NOASLR     0x20
+#define PAX_NOTE_MPROTECT	0x00000001
+#define PAX_NOTE_NOMPROTECT	0x00000002
+#define PAX_NOTE_SEGVGUARD	0x00000004
+#define PAX_NOTE_NOSEGVGUARD	0x00000008
+#define PAX_NOTE_ASLR		0x00000010
+#define PAX_NOTE_NOASLR		0x00000020
 
-void pax_init(void);
+#define PAX_NOTE_RESERVED0	0x40000000
+#define PAX_NOTE_FINALIZED	0x80000000
+
+#define PAX_NOTE_ALL_ENABLED	\
+			(PAX_NOTE_MPROTECT | PAX_NOTE_SEGVGUARD | PAX_NOTE_ASLR)
+#define PAX_NOTE_ALL_DISABLED	\
+			(PAX_NOTE_NOMPROTECT | PAX_NOTE_NOSEGVGUARD | PAX_NOTE_NOASLR)
+#define PAX_NOTE_ALL	(PAX_NOTE_ALL_ENABLED | PAX_NOTE_ALL_DISABLED)
+
+/*
+ * generic pax functions
+ */
+int pax_elf(struct image_params *, uint32_t);
+int pax_get_flags(struct proc *proc, uint32_t *flags);
+struct prison *pax_get_prison(struct proc *proc);
 void pax_init_prison(struct prison *pr);
+
+/*
+ * ASLR related functions
+ */
 bool pax_aslr_active(struct proc *proc);
 void _pax_aslr_init(struct vmspace *vm, struct proc *p);
 void _pax_aslr_init32(struct vmspace *vm, struct proc *p);
 void pax_aslr_init(struct image_params *imgp);
 void pax_aslr_mmap(struct proc *p, vm_offset_t *addr, 
     vm_offset_t orig_addr, int flags);
+u_int pax_aslr_setup_flags(struct image_params *imgp, u_int mode);
 void pax_aslr_stack(struct thread *td, uintptr_t *addr);
-struct prison *pax_get_prison(struct proc *proc);
-void pax_elf(struct image_params *, uint32_t);
 
 #endif /* _KERNEL */
 

@@ -46,6 +46,7 @@ __FBSDID("$FreeBSD$");
 #include <sys/proc.h>
 #include <sys/elf_common.h>
 #include <sys/mount.h>
+#include <sys/pax.h>
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
 #include <sys/queue.h>
@@ -63,12 +64,12 @@ __FBSDID("$FreeBSD$");
 
 #include <machine/elf.h>
 
-#include <sys/pax.h>
+#include <security/mac_bsdextended/mac_bsdextended.h>
 
 FEATURE(aslr, "Address Space Layout Randomization.");
 
-int pax_aslr_status = PAX_ASLR_OPTOUT;
-int pax_aslr_debug = 0;
+int pax_aslr_status = PAX_FEATURE_OPTOUT;
+int pax_aslr_debug = PAX_FEATURE_SIMPLE_DISABLED;
 
 #ifdef PAX_ASLR_MAX_SEC
 int pax_aslr_mmap_len = PAX_ASLR_DELTA_MMAP_MAX_LEN;
@@ -81,7 +82,7 @@ int pax_aslr_exec_len = PAX_ASLR_DELTA_EXEC_DEF_LEN;
 #endif /* PAX_ASLR_MAX_SEC */
 
 #ifdef COMPAT_FREEBSD32
-int pax_aslr_compat_status = PAX_ASLR_OPTOUT;
+int pax_aslr_compat_status = PAX_FEATURE_OPTOUT;
 #ifdef PAX_ASLR_MAX_SEC
 int pax_aslr_compat_mmap_len = PAX_ASLR_COMPAT_DELTA_MMAP_MAX_LEN;
 int pax_aslr_compat_stack_len = PAX_ASLR_COMPAT_DELTA_STACK_MAX_LEN;
@@ -105,10 +106,10 @@ TUNABLE_INT("security.pax.aslr.compat.stack", &pax_aslr_compat_stack_len);
 TUNABLE_INT("security.pax.aslr.compat.stack", &pax_aslr_compat_exec_len);
 #endif
 
-static uint32_t pax_get_status(struct proc *proc, struct prison **pr);
-static int pax_get_flags(struct proc *proc, uint32_t *flags);
-
 #ifdef PAX_SYSCTLS
+
+SYSCTL_DECL(_security_pax);
+
 /*
  * sysctls and tunables
  */
@@ -118,7 +119,6 @@ static int sysctl_pax_aslr_mmap(SYSCTL_HANDLER_ARGS);
 static int sysctl_pax_aslr_stack(SYSCTL_HANDLER_ARGS);
 static int sysctl_pax_aslr_exec(SYSCTL_HANDLER_ARGS);
 
-SYSCTL_DECL(_security_pax);
 
 SYSCTL_NODE(_security_pax, OID_AUTO, aslr, CTLFLAG_RD, 0,
     "Address Space Layout Randomization.");
@@ -169,10 +169,10 @@ sysctl_pax_aslr_status(SYSCTL_HANDLER_ARGS)
 		return (err);
 
 	switch (val) {
-	case PAX_ASLR_DISABLED:
-	case PAX_ASLR_OPTIN:
-	case PAX_ASLR_OPTOUT:
-	case PAX_ASLR_FORCE_ENABLED:
+	case PAX_FEATURE_DISABLED:
+	case PAX_FEATURE_OPTIN:
+	case PAX_FEATURE_OPTOUT:
+	case PAX_FEATURE_FORCE_ENABLED:
 		if ((pr == NULL) || (pr == &prison0))
 			pax_aslr_status = val;
 
@@ -363,10 +363,10 @@ sysctl_pax_aslr_compat_status(SYSCTL_HANDLER_ARGS)
 		return (err);
 
 	switch (val) {
-	case PAX_ASLR_DISABLED:
-	case PAX_ASLR_OPTIN:
-	case PAX_ASLR_OPTOUT:
-	case PAX_ASLR_FORCE_ENABLED:
+	case PAX_FEATURE_DISABLED:
+	case PAX_FEATURE_OPTIN:
+	case PAX_FEATURE_OPTOUT:
+	case PAX_FEATURE_FORCE_ENABLED:
 		if ((pr == NULL) || (pr == &prison0))
 			pax_aslr_compat_status = val;
 
@@ -482,63 +482,33 @@ sysctl_pax_aslr_compat_exec(SYSCTL_HANDLER_ARGS)
  * ASLR functions
  */
 
-
-uint32_t
-pax_get_status(struct proc *proc, struct prison **pr)
+static void
+pax_aslr_sysinit(void)
 {
-	*pr = NULL;
-
-	if ((proc != NULL) && (proc->p_ucred != NULL))
-		*pr = proc->p_ucred->cr_prison;
-
-	if (*pr != NULL)
-		return ((*pr)->pr_pax_aslr_status);
-	else
-		return pax_aslr_status;
-}
-
-static int
-pax_get_flags(struct proc *proc, uint32_t *flags)
-{
-	*flags = 0;
-
-	if (proc != NULL)
-		*flags = proc->p_pax;
-	else
-		return (1);
-
-	if (((*flags & 0xaaaaaaaa) & ((*flags & 0x55555555) << 1)) != 0) {
-		/*
-		 * indicate flags inconsistencies in dmesg and in user terminal
-		 */
-		printf("%s: inconsistent paxflags: %x\n", __func__, *flags);
-		uprintf("inconsistent paxflags: %x\n", *flags);
-
-		return (1);
+	switch (pax_aslr_status) {
+	case PAX_FEATURE_DISABLED:
+	case PAX_FEATURE_OPTIN:
+	case PAX_FEATURE_OPTOUT:
+	case PAX_FEATURE_FORCE_ENABLED:
+		break;
+	default:
+		printf("[PAX ASLR] WARNING, invalid PAX settings in loader.conf!"
+		    " (pax_aslr_status = %d)\n", pax_aslr_status);
+		pax_aslr_status = PAX_FEATURE_FORCE_ENABLED;
+		break;
 	}
-
-	return (0);
+	printf("[PAX ASLR] status: %s\n", pax_status_str[pax_aslr_status]);
+	printf("[PAX ASLR] mmap: %d bit\n", pax_aslr_mmap_len);
+	printf("[PAX ASLR] exec base: %d bit\n", pax_aslr_exec_len);
+	printf("[PAX ASLR] stack: %d bit\n", pax_aslr_stack_len);
 }
-
+SYSINIT(pax_aslr, SI_SUB_PAX, SI_ORDER_SECOND, pax_aslr_sysinit, NULL);
 
 bool
 pax_aslr_active(struct proc *proc)
 {
-	int status;
-	struct prison *pr;
-	uint32_t flags;
+	u_int flags;
 	bool ret;
-
-	if (proc == NULL)
-		return (true);
-
-	status = pax_get_status(proc, &pr);
-
-	if (status == PAX_ASLR_DISABLED)
-		return (false);
-
-	if (status == PAX_ASLR_FORCE_ENABLED)
-		return (true);
 
 	ret = pax_get_flags(proc, &flags);
 	if (ret != 0)
@@ -547,10 +517,13 @@ pax_aslr_active(struct proc *proc)
 		 */
 		return (true);
 
-	if ((status == PAX_ASLR_OPTIN) && (flags & PAX_NOTE_ASLR) == 0)
-		return (false);
+	CTR3(KTR_PAX, "%s: pid = %d p_pax = %x",
+	    __func__, proc->p_pid, flags);
 
-	if ((status == PAX_ASLR_OPTOUT) && (flags & PAX_NOTE_NOASLR) != 0)
+	if ((flags & PAX_NOTE_ASLR) == PAX_NOTE_ASLR)
+		return (true);
+
+	if ((flags & PAX_NOTE_NOASLR) == PAX_NOTE_NOASLR)
 		return (false);
 
 	return (true);
@@ -601,6 +574,28 @@ _pax_aslr_init(struct vmspace *vm, struct proc *p)
 }
 
 #ifdef COMPAT_FREEBSD32
+static void
+pax_compat_aslr_sysinit(void)
+{
+	switch (pax_aslr_compat_status) {
+	case PAX_FEATURE_DISABLED:
+	case PAX_FEATURE_OPTIN:
+	case PAX_FEATURE_OPTOUT:
+	case PAX_FEATURE_FORCE_ENABLED:
+		break;
+	default:
+		printf("[PAX ASLR (compat)] WARNING, invalid PAX settings in loader.conf! "
+		    "(pax_aslr_compat_status = %d)\n", pax_aslr_compat_status);
+		pax_aslr_compat_status = PAX_FEATURE_FORCE_ENABLED;
+		break;
+	}
+	printf("[PAX ASLR (compat)] status: %s\n", pax_status_str[pax_aslr_compat_status]);
+	printf("[PAX ASLR (compat)] mmap: %d bit\n", pax_aslr_compat_mmap_len);
+	printf("[PAX ASLR (compat)] exec base: %d bit\n", pax_aslr_compat_exec_len);
+	printf("[PAX ASLR (compat)] stack: %d bit\n", pax_aslr_compat_stack_len);
+}
+SYSINIT(pax_compat_aslr, SI_SUB_PAX, SI_ORDER_SECOND, pax_compat_aslr_sysinit, NULL);
+
 void
 _pax_aslr_init32(struct vmspace *vm, struct proc *p)
 {
@@ -708,4 +703,74 @@ pax_aslr_stack(struct thread *td, uintptr_t *addr)
 	*addr -= td->td_proc->p_vmspace->vm_aslr_delta_stack;
 	CTR3(KTR_PAX, "%s: orig_addr=%p, new_addr=%p\n",
 	    __func__, (void *)orig_addr, (void *)*addr);
+}
+
+u_int
+pax_aslr_setup_flags(struct image_params *imgp, u_int mode)
+{
+	struct prison *pr;
+	u_int flags, status;
+
+	flags = 0;
+	status = 0;
+
+	pr = pax_get_prison(imgp->proc);
+	if (pr != NULL)
+		status = pr->pr_pax_aslr_status;
+	else
+		status = pax_aslr_status;
+
+	if (status == PAX_FEATURE_DISABLED) {
+		flags &= ~PAX_NOTE_ASLR;
+		flags |= PAX_NOTE_NOASLR;
+
+		return (flags);
+	}
+
+	if (status == PAX_FEATURE_FORCE_ENABLED) {
+		flags |= PAX_NOTE_ASLR;
+		flags &= ~PAX_NOTE_NOASLR;
+
+		return (flags);
+	}
+
+	if (status == PAX_FEATURE_OPTIN) {
+		if (mode & MBI_ASLR_ENABLED) {
+			flags |= PAX_NOTE_ASLR;
+			flags &= ~PAX_NOTE_NOASLR;
+		} else {
+			flags &= ~PAX_NOTE_ASLR;
+			flags |= PAX_NOTE_NOASLR;
+			pax_log_aslr(imgp->proc, __func__,
+	"ASLR is opt-in, and executable don't have enabled ASLR!\n");
+			pax_ulog_aslr(NULL,
+	"ASLR is opt-in, and executable don't have enabled ASLR!\n");
+		}
+
+		return (flags);
+	}
+
+	if (status == PAX_FEATURE_OPTOUT) {
+		if (mode & MBI_ASLR_DISABLED) {
+			flags &= ~PAX_NOTE_ASLR;
+			flags |= PAX_NOTE_NOASLR;
+			pax_log_aslr(imgp->proc, __func__,
+	 "ASLR is opt-out, and executable explicitly disabled ASLR!\n");
+			pax_ulog_aslr(NULL,
+	 "ASLR is opt-out, and executable explicitly disabled ASLR!\n");
+		} else {
+			flags |= PAX_NOTE_ASLR;
+			flags &= ~PAX_NOTE_NOASLR;
+		}
+
+		return (flags);
+	}
+
+	/*
+	 * unknown status, force ASLR
+	 */
+	flags |= PAX_NOTE_ASLR;
+	flags &= ~PAX_NOTE_NOASLR;
+
+	return (flags);
 }

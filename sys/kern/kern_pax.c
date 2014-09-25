@@ -74,6 +74,19 @@ __FBSDID("$FreeBSD$");
 SYSCTL_NODE(_security, OID_AUTO, pax, CTLFLAG_RD, 0,
     "PaX (exploit mitigation) features.");
 
+const char *pax_status_str[] = {
+	[PAX_FEATURE_DISABLED] = "disabled",
+	[PAX_FEATURE_OPTIN] = "opt-in",
+	[PAX_FEATURE_OPTOUT] = "opt-out",
+	[PAX_FEATURE_FORCE_ENABLED] = "force enabled",
+	[PAX_FEATURE_UNKNOWN_STATUS] = "UNKNOWN -> changed to \"force enabled\""
+};
+
+const char *pax_status_simple_str[] = {
+	[PAX_FEATURE_SIMPLE_DISABLED] = "disabled",
+	[PAX_FEATURE_SIMPLE_ENABLED] = "enabled"
+};
+
 struct prison *
 pax_get_prison(struct proc *proc)
 {
@@ -83,17 +96,58 @@ pax_get_prison(struct proc *proc)
 	return (proc->p_ucred->cr_prison);
 }
 
-void
+int
+pax_get_flags(struct proc *proc, uint32_t *flags)
+{
+	*flags = 0;
+
+	if (proc != NULL)
+		*flags = proc->p_pax;
+	else
+		return (1);
+
+	return (0);
+}
+
+int
 pax_elf(struct image_params *imgp, uint32_t mode)
 {
-	u_int flags = 0;
+	u_int flags, flags_aslr;
+
+	flags = 0;
+	flags_aslr = 0;
 
 	if ((mode & MBI_ALLPAX) != MBI_ALLPAX) {
-		if (mode & MBI_FORCE_ASLR_ENABLED)
+		if (mode & MBI_ASLR_ENABLED)
 			flags |= PAX_NOTE_ASLR;
-		else if (mode & MBI_FORCE_ASLR_DISABLED)
+		if (mode & MBI_ASLR_DISABLED)
 			flags |= PAX_NOTE_NOASLR;
 	}
+
+	if ((flags & ~PAX_NOTE_ALL) != 0) {
+		printf("%s: unknown paxflags: %x\n", __func__, flags);
+
+		return (1);
+	}
+
+	if (((flags & PAX_NOTE_ALL_ENABLED) & ((flags & PAX_NOTE_ALL_DISABLED) >> 1)) != 0) {
+		/*
+		 * indicate flags inconsistencies in dmesg and in user terminal
+		 */
+		printf("%s: inconsistent paxflags: %x\n", __func__, flags);
+
+		return (1);
+	}
+
+#ifdef PAX_ASLR
+	flags_aslr = pax_aslr_setup_flags(imgp, mode);
+#endif
+
+	flags = flags_aslr;
+
+
+	CTR3(KTR_PAX, "%s : flags = %x mode = %x",
+	    __func__, flags, mode);
 
 	if (imgp != NULL) {
 		imgp->pax_flags = flags;
@@ -103,64 +157,21 @@ pax_elf(struct image_params *imgp, uint32_t mode)
 			PROC_UNLOCK(imgp->proc);
 		}
 	}
+
+	return (0);
 }
 
 
 /*
  * print out PaX settings on boot time, and validate some of them
  */
-void
-pax_init(void)
+static void
+pax_sysinit(void)
 {
-#if defined(PAX_ASLR)
-	const char *status_str[] = {
-		[0] = "disabled",
-		[1] = "opt-in",
-		[2] = "opt-out",
-		[3] = "force enabled",
-		[4] = "UNKNOWN -> changed to \"force enabled\""
-	};
-#endif
 
-#ifdef PAX_ASLR
-	switch (pax_aslr_status) {
-	case PAX_ASLR_DISABLED:
-	case PAX_ASLR_OPTIN:
-	case PAX_ASLR_OPTOUT:
-	case PAX_ASLR_FORCE_ENABLED:
-		break;
-	default:
-		printf("[PAX ASLR] WARNING, invalid PAX settings in loader.conf!"
-		    " (pax_aslr_status = %d)\n", pax_aslr_status);
-		pax_aslr_status = 3;
-		break;
-	}
-	printf("[PAX ASLR] status: %s\n", status_str[pax_aslr_status]);
-	printf("[PAX ASLR] mmap: %d bit\n", pax_aslr_mmap_len);
-	printf("[PAX ASLR] exec base: %d bit\n", pax_aslr_exec_len);
-	printf("[PAX ASLR] stack: %d bit\n", pax_aslr_stack_len);
-
-#ifdef COMPAT_FREEBSD32
-	switch (pax_aslr_compat_status) {
-	case PAX_ASLR_DISABLED:
-	case PAX_ASLR_OPTIN:
-	case PAX_ASLR_OPTOUT:
-	case PAX_ASLR_FORCE_ENABLED:
-		break;
-	default:
-		printf("[PAX ASLR (compat)] WARNING, invalid PAX settings in loader.conf! "
-		    "(pax_aslr_compat_status = %d)\n", pax_aslr_compat_status);
-		pax_aslr_compat_status = 3;
-		break;
-	}
-	printf("[PAX ASLR (compat)] status: %s\n", status_str[pax_aslr_compat_status]);
-	printf("[PAX ASLR (compat)] mmap: %d bit\n", pax_aslr_compat_mmap_len);
-	printf("[PAX ASLR (compat)] exec base: %d bit\n", pax_aslr_compat_exec_len);
-	printf("[PAX ASLR (compat)] stack: %d bit\n", pax_aslr_compat_stack_len);
-#endif /* COMPAT_FREEBSD32 */
-#endif /* PAX_ASLR */
+	printf("PAX: initialize and check PaX and HardeneBSD features.\n");
 }
-SYSINIT(pax, SI_SUB_PAX, SI_ORDER_FIRST, pax_init, NULL);
+SYSINIT(pax, SI_SUB_PAX, SI_ORDER_FIRST, pax_sysinit, NULL);
 
 void
 pax_init_prison(struct prison *pr)
@@ -172,11 +183,10 @@ pax_init_prison(struct prison *pr)
 	if (pr->pr_pax_set)
 		return;
 
-	mtx_lock(&(pr->pr_mtx));
+	prison_lock(pr);
 
-	if (pax_aslr_debug)
-		uprintf("[PaX ASLR] %s: Setting prison %s ASLR variables\n",
-		    __func__, pr->pr_name);
+	CTR2(KTR_PAX, "%s: Setting prison %s PaX variables",
+	    __func__, pr->pr_name);
 
 #ifdef PAX_ASLR
 	pr->pr_pax_aslr_status = pax_aslr_status;
@@ -195,5 +205,5 @@ pax_init_prison(struct prison *pr)
 
 	pr->pr_pax_set = 1;
 
-	mtx_unlock(&(pr->pr_mtx));
+	prison_unlock(pr);
 }
