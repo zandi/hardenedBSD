@@ -51,8 +51,8 @@ __FBSDID("$FreeBSD$");
 #include <sys/imgact_elf.h>
 #include <sys/wait.h>
 #include <sys/malloc.h>
-#include <sys/priv.h>
 #include <sys/pax.h>
+#include <sys/priv.h>
 #include <sys/proc.h>
 #include <sys/pioctl.h>
 #include <sys/namei.h>
@@ -407,7 +407,9 @@ do_execve(td, args, mac_p)
 	imgp->pax_flags = 0;
 
 #if defined(PAX_ASLR)
-	pax_elf(imgp, 0);
+	error = pax_elf(imgp, 0);
+	if (error)
+		goto exec_fail;
 #endif
 
 #ifdef MAC
