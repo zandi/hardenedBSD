@@ -514,7 +514,7 @@ ixgbe_attach(device_t dev)
 	}
 
 	if (((ixgbe_rxd * sizeof(union ixgbe_adv_rx_desc)) % DBA_ALIGN) != 0 ||
-	    ixgbe_rxd < MIN_TXD || ixgbe_rxd > MAX_TXD) {
+	    ixgbe_rxd < MIN_RXD || ixgbe_rxd > MAX_RXD) {
 		device_printf(dev, "RXD config issue, using default!\n");
 		adapter->num_rx_desc = DEFAULT_RXD;
 	} else
@@ -4142,7 +4142,6 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	rxr->lro_enabled = FALSE;
 	rxr->rx_copies = 0;
 	rxr->rx_bytes = 0;
-	rxr->discard = FALSE;
 	rxr->vtag_strip = FALSE;
 
 	bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
@@ -4523,11 +4522,6 @@ ixgbe_rx_discard(struct rx_ring *rxr, int i)
 
 	rbuf = &rxr->rx_buffers[i];
 
-        if (rbuf->fmp != NULL) {/* Partial chain ? */
-		rbuf->fmp->m_flags |= M_PKTHDR;
-                m_freem(rbuf->fmp);
-                rbuf->fmp = NULL;
-	}
 
 	/*
 	** With advanced descriptors the writeback
@@ -4536,7 +4530,13 @@ ixgbe_rx_discard(struct rx_ring *rxr, int i)
 	** the normal refresh path to get new buffers
 	** and mapping.
 	*/
-	if (rbuf->buf) {
+
+	if (rbuf->fmp != NULL) {/* Partial chain ? */
+		rbuf->fmp->m_flags |= M_PKTHDR;
+		m_freem(rbuf->fmp);
+		rbuf->fmp = NULL;
+		rbuf->buf = NULL; /* rbuf->buf is part of fmp's chain */
+	} else if (rbuf->buf) {
 		m_free(rbuf->buf);
 		rbuf->buf = NULL;
 	}
@@ -4617,13 +4617,8 @@ ixgbe_rxeof(struct ix_queue *que)
 		eop = ((staterr & IXGBE_RXD_STAT_EOP) != 0);
 
 		/* Make sure bad packets are discarded */
-		if (((staterr & IXGBE_RXDADV_ERR_FRAME_ERR_MASK) != 0) ||
-		    (rxr->discard)) {
+		if (eop && (staterr & IXGBE_RXDADV_ERR_FRAME_ERR_MASK) != 0) {
 			rxr->rx_discarded++;
-			if (eop)
-				rxr->discard = FALSE;
-			else
-				rxr->discard = TRUE;
 			ixgbe_rx_discard(rxr, i);
 			goto next_desc;
 		}
