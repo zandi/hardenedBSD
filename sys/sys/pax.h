@@ -207,26 +207,33 @@ extern int pax_aslr_compat_stack_len;
 extern int pax_aslr_compat_exec_len;
 #endif /* COMPAT_FREEBSD32 */
 
-#define PAX_NOTE_MPROTECT	0x00000001
-#define PAX_NOTE_NOMPROTECT	0x00000002
-#define PAX_NOTE_SEGVGUARD	0x00000004
-#define PAX_NOTE_NOSEGVGUARD	0x00000008
-#define PAX_NOTE_ASLR		0x00000010
-#define PAX_NOTE_NOASLR		0x00000020
-
-#define PAX_NOTE_RESERVED0	0x40000000
-#define PAX_NOTE_FINALIZED	0x80000000
-
-#define PAX_NOTE_ALL_ENABLED	\
-			(PAX_NOTE_MPROTECT | PAX_NOTE_SEGVGUARD | PAX_NOTE_ASLR)
-#define PAX_NOTE_ALL_DISABLED	\
-			(PAX_NOTE_NOMPROTECT | PAX_NOTE_NOSEGVGUARD | PAX_NOTE_NOASLR)
-#define PAX_NOTE_ALL	(PAX_NOTE_ALL_ENABLED | PAX_NOTE_ALL_DISABLED)
-
 /*
  * generic pax functions
  */
 int pax_elf(struct image_params *, uint32_t);
+#ifdef PAX_SEGVGUARD
+extern int pax_segvguard_status;
+extern int pax_segvguard_debug;
+extern int pax_segvguard_expiry;
+extern int pax_segvguard_suspension;
+extern int pax_segvguard_maxcrashes;
+#endif /* PAX_SEGVGUARD */
+
+#ifdef PAX_HARDENING
+extern int pax_map32_enabled_global;
+#endif /* PAX_HARDENING*/
+
+extern int pax_log_log;
+extern int pax_log_ulog;
+
+#define PAX_LOG_LOG		0
+#define PAX_LOG_ULOG		0
+
+#define PAX_SEGVGUARD_EXPIRY        (2 * 60)
+#define PAX_SEGVGUARD_SUSPENSION    (10 * 60)
+#define PAX_SEGVGUARD_MAXCRASHES    5
+
+void pax_init_prison(struct prison *pr);
 int pax_get_flags(struct proc *proc, uint32_t *flags);
 struct prison *pax_get_prison(struct proc *proc);
 void pax_init_prison(struct prison *pr);
@@ -244,5 +251,19 @@ u_int pax_aslr_setup_flags(struct image_params *imgp, u_int mode);
 void pax_aslr_stack(struct thread *td, uintptr_t *addr);
 
 #endif /* _KERNEL */
+
+#define ELF_NOTE_TYPE_PAX_TAG   3
+#define PAX_NOTE_MPROTECT   0x01
+#define PAX_NOTE_NOMPROTECT 0x02
+#define PAX_NOTE_GUARD      0x04
+#define PAX_NOTE_NOGUARD    0x08
+#define PAX_NOTE_ASLR       0x10
+#define PAX_NOTE_NOASLR     0x20
+
+#define PAX_NOTE_ALL_ENABLED	\
+			(PAX_NOTE_MPROTECT | PAX_NOTE_GUARD | PAX_NOTE_ASLR)
+#define PAX_NOTE_ALL_DISABLED	\
+			(PAX_NOTE_NOMPROTECT | PAX_NOTE_NOGUARD | PAX_NOTE_NOASLR)
+#define PAX_NOTE_ALL	(PAX_NOTE_ALL_ENABLED | PAX_NOTE_ALL_DISABLED)
 
 #endif /* __SYS_PAX_H */

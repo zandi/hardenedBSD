@@ -33,6 +33,7 @@
 __FBSDID("$FreeBSD$");
 
 #include "opt_compat.h"
+#include "opt_pax.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +42,7 @@ __FBSDID("$FreeBSD$");
 #include <sys/syscallsubr.h>
 #include <sys/sysent.h>
 #include <sys/sysproto.h>
+#include <sys/pax.h>
 #include <sys/priv.h>
 #include <sys/proc.h>
 #include <sys/procctl.h>
@@ -652,6 +654,9 @@ kern_ptrace(struct thread *td, int req, pid_t pid, void *addr, int data)
 
 	/* Lock proctree before locking the process. */
 	switch (req) {
+#ifdef PAX_ASLR
+	case PT_PAX:
+#endif
 	case PT_TRACE_ME:
 	case PT_ATTACH:
 	case PT_STEP:
@@ -669,7 +674,7 @@ kern_ptrace(struct thread *td, int req, pid_t pid, void *addr, int data)
 	}
 
 	write = 0;
-	if (req == PT_TRACE_ME) {
+	if (req == PT_TRACE_ME || req == PT_PAX) {
 		p = td->td_proc;
 		PROC_LOCK(p);
 	} else {
@@ -736,6 +741,7 @@ kern_ptrace(struct thread *td, int req, pid_t pid, void *addr, int data)
 	 * Permissions check
 	 */
 	switch (req) {
+	case PT_PAX:
 	case PT_TRACE_ME:
 		/* Always legal. */
 		break;
@@ -821,6 +827,9 @@ kern_ptrace(struct thread *td, int req, pid_t pid, void *addr, int data)
 	td->td_retval[0] = 0;
 
 	switch (req) {
+	case PT_PAX:
+		p->p_pax = data;
+		break;
 	case PT_TRACE_ME:
 		/* set my trace flag and "owner" so it can read/write me */
 		p->p_flag |= P_TRACED;
