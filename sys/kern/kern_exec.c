@@ -134,6 +134,10 @@ static int map_at_zero = 0;
 SYSCTL_INT(_security_bsd, OID_AUTO, map_at_zero, CTLFLAG_RWTUN, &map_at_zero, 0,
     "Permit processes to map an object at virtual address 0.");
 
+#ifdef PAX_ASLR
+int exec_check_aslr(struct image_params *imgp);
+#endif
+
 static int
 sysctl_kern_ps_strings(SYSCTL_HANDLER_ARGS)
 {
@@ -1394,34 +1398,20 @@ exec_copyout_strings(imgp)
 	return (stack_base);
 }
 
+#ifdef PAX_ASLR
 /*
- * Check permissions of file to execute.
- *	Called with imgp->vp locked.
- *	Return 0 for success or error code on failure.
+ * If we've disabled ASLR via ptrace, do not allow execution of
+ * setuid/setgid binaries.
  */
 int
-exec_check_permissions(imgp)
-	struct image_params *imgp;
+exec_check_aslr(struct image_params *imgp)
 {
-	struct vnode *vp = imgp->vp;
-	struct vattr *attr = imgp->attr;
-	struct thread *td;
-	int error, writecount;
-#ifdef PAX_ASLR
 	struct proc *p = imgp->proc;
-	struct prison *pr;
 	struct ucred *oldcred = p->p_ucred;
-	int credential_changing;
-#endif
+	struct vattr *attr = imgp->attr;
+	struct prison *pr;
+	int error, credential_changing;
 
-	td = curthread;
-
-	/* Get file attributes */
-	error = VOP_GETATTR(vp, attr, td->td_ucred);
-	if (error)
-		return (error);
-
-#if defined(PAX_ASLR)
 	credential_changing = 0;
 	credential_changing |= (attr->va_mode & S_ISUID) && oldcred->cr_uid !=
 	    attr->va_uid;
@@ -1438,6 +1428,34 @@ exec_check_permissions(imgp)
 
 	error = pax_elf(imgp,
 	    p->p_pax & PAX_NOTE_NOASLR ? MBI_ASLR_DISABLED : 0);
+	return (error);
+}
+#endif /* PAX_ASLR */
+
+
+/*
+ * Check permissions of file to execute.
+ *	Called with imgp->vp locked.
+ *	Return 0 for success or error code on failure.
+ */
+int
+exec_check_permissions(imgp)
+	struct image_params *imgp;
+{
+	struct vnode *vp = imgp->vp;
+	struct vattr *attr = imgp->attr;
+	struct thread *td;
+	int error, writecount;
+
+	td = curthread;
+
+	/* Get file attributes */
+	error = VOP_GETATTR(vp, attr, td->td_ucred);
+	if (error)
+		return (error);
+
+#if defined(PAX_ASLR)
+	error = exec_check_aslr(imgp);
 	if (error)
 		return (error);
 #endif
