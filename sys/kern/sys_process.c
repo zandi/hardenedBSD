@@ -742,6 +742,14 @@ kern_ptrace(struct thread *td, int req, pid_t pid, void *addr, int data)
 	 */
 	switch (req) {
 	case PT_PAX:
+		/* securelevel should be 0 to allow this */
+		if ((data & PAX_NOTE_NOASLR) == PAX_NOTE_NOASLR) {
+			if (securelevel_gt(p->p_ucred, 0) != 0) {
+				error = EPERM;
+				goto fail;
+			}
+		}
+		break;
 	case PT_TRACE_ME:
 		/* Always legal. */
 		break;
