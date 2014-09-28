@@ -67,6 +67,7 @@ __FBSDID("$FreeBSD$");
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
+#include <sys/jail.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -406,13 +407,6 @@ do_execve(td, args, mac_p)
 	imgp->pagesizeslen = 0;
 	imgp->stack_prot = 0;
 	imgp->pax_flags = 0;
-
-#if defined(PAX_ASLR)
-	error = pax_elf(imgp,
-	    p->p_pax & PAX_NOTE_NOASLR ? MBI_ASLR_DISABLED : 0);
-	if (error)
-		goto exec_fail;
-#endif
 
 #ifdef MAC
 	error = mac_execve_enter(imgp, mac_p);
@@ -1413,6 +1407,12 @@ exec_check_permissions(imgp)
 	struct vattr *attr = imgp->attr;
 	struct thread *td;
 	int error, writecount;
+#ifdef PAX_ASLR
+	struct proc *p = imgp->proc;
+	struct prison *pr;
+	struct ucred *oldcred = p->p_ucred;
+	int credential_changing;
+#endif
 
 	td = curthread;
 
@@ -1420,6 +1420,27 @@ exec_check_permissions(imgp)
 	error = VOP_GETATTR(vp, attr, td->td_ucred);
 	if (error)
 		return (error);
+
+#if defined(PAX_ASLR)
+	credential_changing = 0;
+	credential_changing |= (attr->va_mode & S_ISUID) && oldcred->cr_uid !=
+	    attr->va_uid;
+	credential_changing |= (attr->va_mode & S_ISGID) && oldcred->cr_gid !=
+	    attr->va_gid;
+
+	if (credential_changing) {
+		if ((p->p_pax & PAX_NOTE_NOASLR) == PAX_NOTE_NOASLR) {
+			pr = pax_get_prison(p);
+			if ((pr && pr->pr_pax_aslr_status > 1) || pax_aslr_status > 1)
+				return (EPERM);
+		}
+	}
+
+	error = pax_elf(imgp,
+	    p->p_pax & PAX_NOTE_NOASLR ? MBI_ASLR_DISABLED : 0);
+	if (error)
+		return (error);
+#endif
 
 #ifdef MAC
 	error = mac_vnode_check_exec(td->td_ucred, imgp->vp, imgp);
