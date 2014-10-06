@@ -225,12 +225,13 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 
 	nxt = ip6->ip6_nxt;
 	cscov_partial = (nxt == IPPROTO_UDPLITE) ? 1 : 0;
-	if (nxt == IPPROTO_UDPLITE && ulen == 0) {
+	if (nxt == IPPROTO_UDPLITE && (ulen == 0 || ulen == plen)) {
 		/* Zero means checksum over the complete packet. */
-		ulen = plen;
+		if (ulen == 0)
+			ulen = plen;
 		cscov_partial = 0;
 	}
-	if (plen != ulen) {
+	if (nxt == IPPROTO_UDP && plen != ulen) {
 		UDPSTAT_INC(udps_badlen);
 		goto badunlocked;
 	}
