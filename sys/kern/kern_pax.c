@@ -88,23 +88,19 @@ const char *pax_status_simple_str[] = {
 };
 
 struct prison *
-pax_get_prison(struct proc *proc)
+pax_get_prison(struct proc *p)
 {
-	if ((proc == NULL) || (proc->p_ucred == NULL))
-		return (NULL);
+	/* p can be NULL with kernel threads, so use prison0 */
+	if (p == NULL || p->p_ucred == NULL)
+		return &prison0;
 
-	return (proc->p_ucred->cr_prison);
+	return (p->p_ucred->cr_prison);
 }
 
 int
-pax_get_flags(struct proc *proc, uint32_t *flags)
+pax_get_flags(struct proc *p, uint32_t *flags)
 {
-	*flags = 0;
-
-	if (proc != NULL)
-		*flags = proc->p_pax;
-	else
-		return (1);
+	*flags = p->p_pax;
 
 	return (0);
 }
@@ -149,13 +145,11 @@ pax_elf(struct image_params *imgp, uint32_t mode)
 	CTR3(KTR_PAX, "%s : flags = %x mode = %x",
 	    __func__, flags, mode);
 
-	if (imgp != NULL) {
-		imgp->pax_flags = flags;
-		if (imgp->proc != NULL) {
-			PROC_LOCK(imgp->proc);
-			imgp->proc->p_pax = flags;
-			PROC_UNLOCK(imgp->proc);
-		}
+	imgp->pax_flags = flags;
+	if (imgp->proc != NULL) {
+		PROC_LOCK(imgp->proc);
+		imgp->proc->p_pax = flags;
+		PROC_UNLOCK(imgp->proc);
 	}
 
 	return (0);
@@ -176,34 +170,45 @@ SYSINIT(pax, SI_SUB_PAX, SI_ORDER_FIRST, pax_sysinit, NULL);
 void
 pax_init_prison(struct prison *pr)
 {
-
-	if (pr == NULL)
-		return;
-
-	if (pr->pr_pax_set)
-		return;
-
-	prison_lock(pr);
-
-	CTR2(KTR_PAX, "%s: Setting prison %s PaX variables",
+	CTR2(KTR_PAX, "%s: Setting prison %s PaX variables\n",
 	    __func__, pr->pr_name);
 
+	if (pr->pr_parent == NULL) {
+		/* prison0 has no parent, use globals */
 #ifdef PAX_ASLR
-	pr->pr_pax_aslr_status = pax_aslr_status;
-	pr->pr_pax_aslr_debug = pax_aslr_debug;
-	pr->pr_pax_aslr_mmap_len = pax_aslr_mmap_len;
-	pr->pr_pax_aslr_stack_len = pax_aslr_stack_len;
-	pr->pr_pax_aslr_exec_len = pax_aslr_exec_len;
+		pr->pr_pax_aslr_status = pax_aslr_status;
+		pr->pr_pax_aslr_debug = pax_aslr_debug;
+		pr->pr_pax_aslr_mmap_len = pax_aslr_mmap_len;
+		pr->pr_pax_aslr_stack_len = pax_aslr_stack_len;
+		pr->pr_pax_aslr_exec_len = pax_aslr_exec_len;
 
 #ifdef COMPAT_FREEBSD32
-	pr->pr_pax_aslr_compat_status = pax_aslr_compat_status;
-	pr->pr_pax_aslr_compat_mmap_len = pax_aslr_compat_mmap_len;
-	pr->pr_pax_aslr_compat_stack_len = pax_aslr_compat_stack_len;
-	pr->pr_pax_aslr_compat_exec_len = pax_aslr_compat_exec_len;
+		pr->pr_pax_aslr_compat_status = pax_aslr_compat_status;
+		pr->pr_pax_aslr_compat_mmap_len = pax_aslr_compat_mmap_len;
+		pr->pr_pax_aslr_compat_stack_len = pax_aslr_compat_stack_len;
+		pr->pr_pax_aslr_compat_exec_len = pax_aslr_compat_exec_len;
 #endif /* COMPAT_FREEBSD32 */
 #endif /* PAX_ASLR */
+	} else {
+#ifdef PAX_ASLR
+		struct prison *p = pr->pr_parent;
 
-	pr->pr_pax_set = 1;
+		pr->pr_pax_aslr_status = p->pr_pax_aslr_status;
+		pr->pr_pax_aslr_debug = p->pr_pax_aslr_debug;
+		pr->pr_pax_aslr_mmap_len = p->pr_pax_aslr_mmap_len;
+		pr->pr_pax_aslr_stack_len = p->pr_pax_aslr_stack_len;
+		pr->pr_pax_aslr_exec_len = p->pr_pax_aslr_exec_len;
 
-	prison_unlock(pr);
+#ifdef COMPAT_FREEBSD32
+		pr->pr_pax_aslr_compat_status =
+		    p->pr_pax_aslr_compat_status;
+		pr->pr_pax_aslr_compat_mmap_len =
+		    p->pr_pax_aslr_compat_mmap_len;
+		pr->pr_pax_aslr_compat_stack_len =
+		    p->pr_pax_aslr_compat_stack_len;
+		pr->pr_pax_aslr_compat_exec_len =
+		    p->pr_pax_aslr_compat_exec_len;
+#endif /* COMPAT_FREEBSD32 */
+#endif /* PAX_ASLR */
+	}
 }
