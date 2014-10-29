@@ -233,7 +233,7 @@ extern int pax_log_ulog;
 #define PAX_SEGVGUARD_MAXCRASHES    5
 
 void pax_init_prison(struct prison *pr);
-int pax_get_flags(struct proc *proc, uint32_t *flags);
+void pax_get_flags(struct proc *proc, uint32_t *flags);
 struct prison *pax_get_prison(struct proc *proc);
 void pax_init_prison(struct prison *pr);
 
