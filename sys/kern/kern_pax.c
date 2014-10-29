@@ -177,11 +177,9 @@ pax_init_prison(struct prison *pr)
 		/* prison0 has no parent, use globals */
 #ifdef PAX_ASLR
 		pr->pr_pax_aslr_status = pax_aslr_status;
-		pr->pr_pax_aslr_debug = pax_aslr_debug;
 		pr->pr_pax_aslr_mmap_len = pax_aslr_mmap_len;
 		pr->pr_pax_aslr_stack_len = pax_aslr_stack_len;
 		pr->pr_pax_aslr_exec_len = pax_aslr_exec_len;
-
 #ifdef COMPAT_FREEBSD32
 		pr->pr_pax_aslr_compat_status = pax_aslr_compat_status;
 		pr->pr_pax_aslr_compat_mmap_len = pax_aslr_compat_mmap_len;
@@ -194,11 +192,9 @@ pax_init_prison(struct prison *pr)
 		struct prison *p = pr->pr_parent;
 
 		pr->pr_pax_aslr_status = p->pr_pax_aslr_status;
-		pr->pr_pax_aslr_debug = p->pr_pax_aslr_debug;
 		pr->pr_pax_aslr_mmap_len = p->pr_pax_aslr_mmap_len;
 		pr->pr_pax_aslr_stack_len = p->pr_pax_aslr_stack_len;
 		pr->pr_pax_aslr_exec_len = p->pr_pax_aslr_exec_len;
-
 #ifdef COMPAT_FREEBSD32
 		pr->pr_pax_aslr_compat_status =
 		    p->pr_pax_aslr_compat_status;

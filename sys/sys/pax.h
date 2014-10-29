@@ -195,7 +195,6 @@ extern const char *pax_status_simple_str[];
 #endif /* PAX_ASLR_COMPAT_DELTA_EXEC_MAX_LEN */
 
 extern int pax_aslr_status;
-extern int pax_aslr_debug;
 
 extern int pax_aslr_mmap_len;
 extern int pax_aslr_stack_len;
