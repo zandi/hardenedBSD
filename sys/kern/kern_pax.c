@@ -123,7 +123,7 @@ pax_elf(struct image_params *imgp, uint32_t mode)
 	if ((flags & ~PAX_NOTE_ALL) != 0) {
 		printf("%s: unknown paxflags: %x\n", __func__, flags);
 
-		return (1);
+		return (ENOEXEC);
 	}
 
 	if (((flags & PAX_NOTE_ALL_ENABLED) & ((flags & PAX_NOTE_ALL_DISABLED) >> 1)) != 0) {
@@ -132,7 +132,7 @@ pax_elf(struct image_params *imgp, uint32_t mode)
 		 */
 		printf("%s: inconsistent paxflags: %x\n", __func__, flags);
 
-		return (1);
+		return (ENOEXEC);
 	}
 
 #ifdef PAX_ASLR
