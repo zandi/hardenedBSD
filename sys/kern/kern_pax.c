@@ -188,23 +188,23 @@ pax_init_prison(struct prison *pr)
 #endif /* PAX_ASLR */
 	} else {
 #ifdef PAX_ASLR
-		struct prison *p;
+		struct prison *pr_p;
 
-		p = pr->pr_parent;
+		pr_p = pr->pr_parent;
 
-		pr->pr_pax_aslr_status = p->pr_pax_aslr_status;
-		pr->pr_pax_aslr_mmap_len = p->pr_pax_aslr_mmap_len;
-		pr->pr_pax_aslr_stack_len = p->pr_pax_aslr_stack_len;
-		pr->pr_pax_aslr_exec_len = p->pr_pax_aslr_exec_len;
+		pr->pr_pax_aslr_status = pr_p->pr_pax_aslr_status;
+		pr->pr_pax_aslr_mmap_len = pr_p->pr_pax_aslr_mmap_len;
+		pr->pr_pax_aslr_stack_len = pr_p->pr_pax_aslr_stack_len;
+		pr->pr_pax_aslr_exec_len = pr_p->pr_pax_aslr_exec_len;
 #ifdef COMPAT_FREEBSD32
 		pr->pr_pax_aslr_compat_status =
-		    p->pr_pax_aslr_compat_status;
+		    pr_p->pr_pax_aslr_compat_status;
 		pr->pr_pax_aslr_compat_mmap_len =
-		    p->pr_pax_aslr_compat_mmap_len;
+		    pr_p->pr_pax_aslr_compat_mmap_len;
 		pr->pr_pax_aslr_compat_stack_len =
-		    p->pr_pax_aslr_compat_stack_len;
+		    pr_p->pr_pax_aslr_compat_stack_len;
 		pr->pr_pax_aslr_compat_exec_len =
-		    p->pr_pax_aslr_compat_exec_len;
+		    pr_p->pr_pax_aslr_compat_exec_len;
 #endif /* COMPAT_FREEBSD32 */
 #endif /* PAX_ASLR */
 	}
