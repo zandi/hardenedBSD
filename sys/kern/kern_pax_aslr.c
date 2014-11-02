@@ -429,7 +429,7 @@ pax_aslr_active(struct proc *proc)
 {
 	u_int flags;
 
-	pax_get_flags(p, &flags);
+	pax_get_flags(proc, &flags);
 
 	CTR3(KTR_PAX, "%s: pid = %d p_pax = %x",
 	    __func__, proc->p_pid, flags);
