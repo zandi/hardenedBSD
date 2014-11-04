@@ -513,12 +513,6 @@ do_fork(struct thread *td, int flags, struct proc *p2, struct thread *td2,
 	}
 
 	/*
-	 * Per-process PaX flags.
-	 */
-	p2->p_pax = p1->p_pax;
-	p2->p_paxdebug = p1->p_paxdebug;
-
-	/*
 	 * p_limit is copy-on-write.  Bump its refcount.
 	 */
 	lim_fork(p1, p2);
