@@ -88,6 +88,7 @@ const char *pax_status_simple_str[] = {
 struct prison *
 pax_get_prison(struct proc *p)
 {
+
 	/* p can be NULL with kernel threads, so use prison0 */
 	if (p == NULL || p->p_ucred == NULL)
 		return (&prison0);
@@ -155,6 +156,7 @@ SYSINIT(pax, SI_SUB_PAX, SI_ORDER_FIRST, pax_sysinit, NULL);
 void
 pax_init_prison(struct prison *pr)
 {
+
 	CTR2(KTR_PAX, "%s: Setting prison %s PaX variables\n",
 	    __func__, pr->pr_name);
 
