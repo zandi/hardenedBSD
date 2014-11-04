@@ -64,8 +64,6 @@ __FBSDID("$FreeBSD$");
 
 #include <machine/elf.h>
 
-#include <security/mac_bsdextended/mac_bsdextended.h>
-
 FEATURE(aslr, "Address Space Layout Randomization.");
 
 int pax_aslr_status = PAX_FEATURE_OPTOUT;
@@ -424,7 +422,7 @@ pax_aslr_sysinit(void)
 }
 SYSINIT(pax_aslr, SI_SUB_PAX, SI_ORDER_SECOND, pax_aslr_sysinit, NULL);
 
-bool
+int
 pax_aslr_active(struct proc *p)
 {
 	u_int flags;
@@ -616,7 +614,7 @@ pax_aslr_setup_flags(struct image_params *imgp, u_int mode)
 	}
 
 	if (status == PAX_FEATURE_OPTIN) {
-		if (mode & MBI_ASLR_ENABLED) {
+		if (mode & PAX_NOTE_ASLR) {
 			flags |= PAX_NOTE_ASLR;
 			flags &= ~PAX_NOTE_NOASLR;
 		} else {
@@ -628,7 +626,7 @@ pax_aslr_setup_flags(struct image_params *imgp, u_int mode)
 	}
 
 	if (status == PAX_FEATURE_OPTOUT) {
-		if (mode & MBI_ASLR_DISABLED) {
+		if (mode & PAX_NOTE_NOASLR) {
 			flags &= ~PAX_NOTE_ASLR;
 			flags |= PAX_NOTE_NOASLR;
 		} else {

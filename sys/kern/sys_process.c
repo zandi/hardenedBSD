@@ -836,7 +836,7 @@ kern_ptrace(struct thread *td, int req, pid_t pid, void *addr, int data)
 
 	switch (req) {
 	case PT_PAX:
-		p->p_pax = data;
+		p->p_paxdebug = data;
 		break;
 	case PT_TRACE_ME:
 		/* set my trace flag and "owner" so it can read/write me */

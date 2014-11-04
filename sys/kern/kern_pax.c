@@ -69,8 +69,6 @@ __FBSDID("$FreeBSD$");
 
 #include <sys/pax.h>
 
-#include <security/mac_bsdextended/mac_bsdextended.h>
-
 SYSCTL_NODE(_security, OID_AUTO, pax, CTLFLAG_RD, 0,
     "PaX (exploit mitigation) features.");
 
@@ -109,15 +107,8 @@ pax_elf(struct image_params *imgp, uint32_t mode)
 {
 	u_int flags, flags_aslr;
 
-	flags = 0;
+	flags = mode;
 	flags_aslr = 0;
-
-	if ((mode & MBI_ALLPAX) != MBI_ALLPAX) {
-		if (mode & MBI_ASLR_ENABLED)
-			flags |= PAX_NOTE_ASLR;
-		if (mode & MBI_ASLR_DISABLED)
-			flags |= PAX_NOTE_NOASLR;
-	}
 
 	if ((flags & ~PAX_NOTE_ALL) != 0) {
 		printf("%s: unknown paxflags: %x\n", __func__, flags);
@@ -125,11 +116,11 @@ pax_elf(struct image_params *imgp, uint32_t mode)
 		return (ENOEXEC);
 	}
 
-	if (((flags & PAX_NOTE_ALL_ENABLED) & ((flags & PAX_NOTE_ALL_DISABLED) >> 1)) != 0) {
+	if (((mode & PAX_NOTE_ALL_ENABLED) & ((mode & PAX_NOTE_ALL_DISABLED) >> 1)) != 0) {
 		/*
 		 * indicate flags inconsistencies in dmesg and in user terminal
 		 */
-		printf("%s: inconsistent paxflags: %x\n", __func__, flags);
+		printf("%s: inconsistent paxflags: %x\n", __func__, mode);
 
 		return (ENOEXEC);
 	}
@@ -138,18 +129,13 @@ pax_elf(struct image_params *imgp, uint32_t mode)
 	flags_aslr = pax_aslr_setup_flags(imgp, mode);
 #endif
 
-	flags = flags_aslr;
-
+	flags |= flags_aslr;
 
 	CTR3(KTR_PAX, "%s : flags = %x mode = %x",
 	    __func__, flags, mode);
 
 	imgp->pax_flags = flags;
-	if (imgp->proc != NULL) {
-		PROC_LOCK(imgp->proc);
-		imgp->proc->p_pax = flags;
-		PROC_UNLOCK(imgp->proc);
-	}
+	imgp->proc->p_pax = flags;
 
 	return (0);
 }

@@ -54,10 +54,6 @@
 #define	MBI_ALLPERM	(MBI_EXEC | MBI_WRITE | MBI_READ | MBI_ADMIN | \
 			    MBI_STAT | MBI_APPEND)
 
-#define MBI_ASLR_ENABLED	0x01
-#define MBI_ASLR_DISABLED	0x02
-#define MBI_ALLPAX		(MBI_ASLR_ENABLED | MBI_ASLR_DISABLED)
-
 #define	MBS_UID_DEFINED	0x00000001	/* uid field should be matched */
 #define	MBS_GID_DEFINED	0x00000002	/* gid field should be matched */
 #define	MBS_PRISON_DEFINED 0x00000004	/* prison field should be matched */

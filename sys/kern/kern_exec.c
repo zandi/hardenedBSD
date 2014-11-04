@@ -90,7 +90,6 @@ __FBSDID("$FreeBSD$");
 
 #include <security/audit/audit.h>
 #include <security/mac/mac_framework.h>
-#include <security/mac_bsdextended/mac_bsdextended.h>
 
 #ifdef KDTRACE_HOOKS
 #include <sys/dtrace_bsd.h>
@@ -135,7 +134,7 @@ SYSCTL_INT(_security_bsd, OID_AUTO, map_at_zero, CTLFLAG_RWTUN, &map_at_zero, 0,
     "Permit processes to map an object at virtual address 0.");
 
 #ifdef PAX_ASLR
-int exec_check_aslr(struct image_params *imgp);
+static int exec_check_aslr(struct image_params *imgp);
 #endif
 
 static int
@@ -1388,13 +1387,12 @@ exec_copyout_strings(imgp)
  * If we've disabled ASLR via ptrace, do not allow execution of
  * setuid/setgid binaries.
  */
-int
+static int
 exec_check_aslr(struct image_params *imgp)
 {
 	struct proc *p = imgp->proc;
 	struct ucred *oldcred = p->p_ucred;
 	struct vattr *attr = imgp->attr;
-	struct prison *pr;
 	int error, credential_changing;
 
 	credential_changing = 0;
@@ -1404,15 +1402,13 @@ exec_check_aslr(struct image_params *imgp)
 	    attr->va_gid;
 
 	if (credential_changing) {
-		if ((p->p_pax & PAX_NOTE_NOASLR) == PAX_NOTE_NOASLR) {
-			pr = pax_get_prison(p);
-			if ((pr && pr->pr_pax_aslr_status > 1) || pax_aslr_status > 1)
+		if ((p->p_paxdebug & PAX_NOTE_NOASLR) == PAX_NOTE_NOASLR) {
+			if (pax_aslr_active(imgp->proc))
 				return (EPERM);
 		}
 	}
 
-	error = pax_elf(imgp,
-	    p->p_pax & PAX_NOTE_NOASLR ? MBI_ASLR_DISABLED : 0);
+	error = pax_elf(imgp, p->p_paxdebug);
 	return (error);
 }
 #endif /* PAX_ASLR */
