@@ -442,10 +442,12 @@ pax_aslr_active(struct proc *p)
 }
 
 void
-_pax_aslr_init(struct vmspace *vm, struct proc *p)
+pax_aslr_init_vmspace(struct proc *p)
 {
 	struct prison *pr;
+	struct vmspace *vm;
 
+	vm = p->p_vmspace;
 	KASSERT(vm != NULL, ("%s: vm is null", __func__));
 
 	pr = pax_get_prison(p);
@@ -494,10 +496,12 @@ pax_compat_aslr_sysinit(void)
 SYSINIT(pax_compat_aslr, SI_SUB_PAX, SI_ORDER_SECOND, pax_compat_aslr_sysinit, NULL);
 
 void
-_pax_aslr_init32(struct vmspace *vm, struct proc *p)
+pax_aslr_init_vmspace32(struct proc *p)
 {
 	struct prison *pr;
+	struct vmspace *vm;
 
+	vm = p->p_vmspace;
 	KASSERT(vm != NULL, ("%s: vm is null", __func__));
 
 	pr = pax_get_prison(p);
@@ -526,7 +530,6 @@ _pax_aslr_init32(struct vmspace *vm, struct proc *p)
 void
 pax_aslr_init(struct image_params *imgp)
 {
-	struct vmspace *vm;
 	struct proc *p;
 
 	KASSERT(imgp != NULL, ("%s: imgp is null", __func__));
@@ -535,10 +538,8 @@ pax_aslr_init(struct image_params *imgp)
 	if (!pax_aslr_active(p))
 		return;
 
-	vm = p->p_vmspace;
-
 	if (imgp->sysent->sv_pax_aslr_init != NULL)
-		imgp->sysent->sv_pax_aslr_init(vm, p);
+		imgp->sysent->sv_pax_aslr_init(p);
 }
 
 void
