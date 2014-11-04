@@ -156,8 +156,9 @@ extern const char *pax_status_simple_str[];
 #endif /* __amd64__ */
 
 /*
- * ASLR values for COMPAT_FREEBSD32 and COMPAT_LINUX
+ * ASLR values for COMPAT_FREEBSD32, COMPAT_LINUX and MAP_32BIT
  */
+#if defined(COMPAT_LINUX) || defined(COMPAT_FREEBSD32) || defined(MAP_32BIT)
 #ifndef PAX_ASLR_COMPAT_DELTA_MMAP_LSB
 #define PAX_ASLR_COMPAT_DELTA_MMAP_LSB		PAGE_SHIFT
 #endif /* PAX_ASLR_COMPAT_DELTA_MMAP_LSB */
@@ -193,6 +194,7 @@ extern const char *pax_status_simple_str[];
 #ifndef PAX_ASLR_COMPAT_DELTA_EXEC_MAX_LEN
 #define PAX_ASLR_COMPAT_DELTA_EXEC_MAX_LEN	((sizeof(int) * NBBY) / 3)
 #endif /* PAX_ASLR_COMPAT_DELTA_EXEC_MAX_LEN */
+#endif
 
 extern int pax_aslr_status;
 
