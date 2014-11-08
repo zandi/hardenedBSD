@@ -42,6 +42,7 @@ __FBSDID("$FreeBSD$");
 #include <sys/imgact.h>
 #include <sys/imgact_elf.h>
 #include <sys/sysent.h>
+#include <sys/systm.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
 #include <sys/elf_common.h>
@@ -557,15 +558,19 @@ pax_aslr_sysinit(void)
 	case PAX_FEATURE_FORCE_ENABLED:
 		break;
 	default:
-		printf("[PAX ASLR] WARNING, invalid PAX settings in loader.conf!"
+		printf("PAX ASLR WARNING, invalid PAX settings in loader.conf!"
 		    " (pax_aslr_status = %d)\n", pax_aslr_status);
 		pax_aslr_status = PAX_FEATURE_FORCE_ENABLED;
 		break;
 	}
-	printf("[PAX ASLR] status: %s\n", pax_status_str[pax_aslr_status]);
-	printf("[PAX ASLR] mmap: %d bit\n", pax_aslr_mmap_len);
-	printf("[PAX ASLR] exec base: %d bit\n", pax_aslr_exec_len);
-	printf("[PAX ASLR] stack: %d bit\n", pax_aslr_stack_len);
+	if (bootverbose) {
+		printf("PAX ASLR status: %s\n",
+		    pax_status_str[pax_aslr_status]);
+		printf("PAX ASLR mmap: %d bits\n", pax_aslr_mmap_len);
+		printf("PAX ASLR exec base: %d bits\n",
+		    pax_aslr_exec_len);
+		printf("PAX ASLR stack: %d bits\n", pax_aslr_stack_len);
+	}
 }
 SYSINIT(pax_aslr, SI_SUB_PAX, SI_ORDER_SECOND, pax_aslr_sysinit, NULL);
 
@@ -631,15 +636,17 @@ pax_compat_aslr_sysinit(void)
 	case PAX_FEATURE_FORCE_ENABLED:
 		break;
 	default:
-		printf("[PAX ASLR (compat)] WARNING, invalid PAX settings in loader.conf! "
+		printf("PAX ASLR (compat) WARNING, invalid PAX settings in loader.conf! "
 		    "(pax_aslr_compat_status = %d)\n", pax_aslr_compat_status);
 		pax_aslr_compat_status = PAX_FEATURE_FORCE_ENABLED;
 		break;
 	}
-	printf("[PAX ASLR (compat)] status: %s\n", pax_status_str[pax_aslr_compat_status]);
-	printf("[PAX ASLR (compat)] mmap: %d bit\n", pax_aslr_compat_mmap_len);
-	printf("[PAX ASLR (compat)] exec base: %d bit\n", pax_aslr_compat_exec_len);
-	printf("[PAX ASLR (compat)] stack: %d bit\n", pax_aslr_compat_stack_len);
+	if (bootverbose) {
+		printf("PAX ASLR (compat) status: %s\n", pax_status_str[pax_aslr_compat_status]);
+		printf("PAX ASLR (compat) mmap: %d bit\n", pax_aslr_compat_mmap_len);
+		printf("PAX ASLR (compat) exec base: %d bit\n", pax_aslr_compat_exec_len);
+		printf("PAX ASLR (compat) stack: %d bit\n", pax_aslr_compat_stack_len);
+	}
 }
 SYSINIT(pax_compat_aslr, SI_SUB_PAX, SI_ORDER_SECOND, pax_compat_aslr_sysinit, NULL);
 
@@ -680,7 +687,6 @@ pax_aslr_init(struct image_params *imgp)
 {
 	struct proc *p;
 
-	KASSERT(imgp != NULL, ("%s: imgp is null", __func__));
 	p = imgp->proc;
 
 	if (!pax_aslr_active(p))
