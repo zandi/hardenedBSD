@@ -89,15 +89,75 @@
                 test-programs
                 ..
             ..
+            libc
+                c063
+                ..
+                db
+                ..
+                gen
+                    execve
+                    ..
+                    posix_spawn
+                    ..
+                ..
+                hash
+                    data
+                    ..
+                ..
+                inet
+                ..
+                locale
+                ..
+                net
+                    getaddrinfo
+                        data
+                        ..
+                    ..
+                ..
+                regex
+                    data
+                    ..
+                ..
+                ssp
+                ..
+                stdio
+                ..
+                stdlib
+                ..
+                string
+                ..
+                sys
+                ..
+                time
+                ..
+                tls
+                    dso
+                    ..
+                ..
+                termios
+                ..
+                ttyio
+                ..
+            ..
             libcrypt
             ..
             libmp
             ..
             libnv
             ..
+            libpam
+            ..
             libproc
             ..
+            librt
+            ..
+            libthr
+                dlopen
+                ..
+            ..
             libutil
+            ..
+            msun
             ..
         ..
         libexec
