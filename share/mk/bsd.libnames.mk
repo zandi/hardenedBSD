@@ -67,6 +67,7 @@ LIBFL?=		"don't use LIBFL, use LIBL"
 LIBFORM?=	${DESTDIR}${LIBDIR}/libform.a
 LIBFORM_PIC?=	${DESTDIR}${LIBDIR}/libform_pic.a
 LIBG2C?=	${DESTDIR}${LIBDIR}/libg2c.a
+LIBGPIO?=	${DESTDIR}${LIBDIR}/libgpio.a
 LIBGEOM?=	${DESTDIR}${LIBDIR}/libgeom.a
 LIBGNUREGEX?=	${DESTDIR}${LIBDIR}/libgnuregex.a
 LIBGSSAPI?=	${DESTDIR}${LIBDIR}/libgssapi.a
