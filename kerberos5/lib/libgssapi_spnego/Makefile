@@ -3,8 +3,7 @@
 INSTALL_PIC_ARCHIVE=	yes
 LIB=	gssapi_spnego
 LDFLAGS= -Wl,-Bsymbolic -Wl,--no-undefined
-LDADD=	-lgssapi -lheimbase -lasn1 -lroken
-DPADD=	${LIBGSSAPI} ${LIBHEIMBASE} ${LIBASN1} ${LIBROKEN}
+LIBADD=	gssapi heimbase asn1 roken
 SHLIB_MAJOR=	10
 
 SRCS=	accept_sec_context.c \

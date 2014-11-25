@@ -4,8 +4,7 @@ INSTALL_PIC_ARCHIVE=	yes
 LIB=	asn1
 LDFLAGS=	-Wl,--no-undefined
 INCS=	asn1_err.h asn1-common.h heim_asn1.h der.h der-protos.h der-private.h
-LDADD=	-lcom_err -lroken
-DPADD=	${LIBCOM_ERR} ${LIBROKEN}
+LIBADD=	com_err roken
 VERSION_MAP=	${.CURDIR}/version.map
 
 SRCS=	asn1_err.c \

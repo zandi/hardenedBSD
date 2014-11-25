@@ -2,8 +2,7 @@
 
 INSTALL_PIC_ARCHIVE=	yes
 LIB=	roken
-LDADD=	-lcrypt
-DPADD=	${LIBCRYPT}
+LIBADD=	crypt
 VERSION_MAP=	${KRB5DIR}/lib/roken/version-script.map
 INCS=	roken.h \
 	roken-common.h \
