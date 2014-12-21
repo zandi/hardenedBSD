@@ -2017,7 +2017,7 @@ vm_map_protect(vm_map_t map, vm_offset_t start, vm_offset_t end,
 		 * XXXOP: in early stages of NOEXEC implemenations we should only
 		 * restrict the userspace protection upgrades.
 		 */
-		if ((start < VM_MAXUSER_ADDRESS && stop < VM_MAXUSER_ADDRESS) &&
+		if ((start < VM_MAXUSER_ADDRESS && end < VM_MAXUSER_ADDRESS) &&
 		    ((new_prot & VM_PROT_EXECUTE) == VM_PROT_EXECUTE) &&
 		    ((old_prot & VM_PROT_EXECUTE) != VM_PROT_EXECUTE)) {
 			if (pax_mprotect_exec_harden(curthread)) {
