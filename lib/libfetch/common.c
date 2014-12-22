@@ -51,6 +51,7 @@ __FBSDID("$FreeBSD$");
 
 #ifdef WITH_SSL
 #include <openssl/x509v3.h>
+#include <openssl/err.h>
 #endif
 
 #include "fetch.h"

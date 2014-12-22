@@ -21,5 +21,6 @@ CFLAGS+= 	-I${.CURDIR} -I${SERF} \
 		-I${APR}/include/arch/unix -I${APR}/include \
 		-I${.CURDIR}/../libapr_util \
 		-I${APRU}/include
+CFLAGS+=-I${.CURDIR}/../../../../crypto/openssl/include
 
 .include <bsd.lib.mk>

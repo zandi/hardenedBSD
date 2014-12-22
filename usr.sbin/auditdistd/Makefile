@@ -8,6 +8,7 @@ OPENBSMDIR=${.CURDIR}/../../contrib/openbsm
 # Addition of auditdistd because otherwise generated parse.c can't find
 # auditdistd.h.  This seems like a makefile non-feature.
 CFLAGS+=-I${OPENBSMDIR} -I${OPENBSMDIR}/bin/auditdistd
+CFLAGS+=-I${.CURDIR}/../../crypto/openssl/include
 
 NO_WFORMAT=
 NO_WMISSING_VARIABLE_DECLARATIONS=

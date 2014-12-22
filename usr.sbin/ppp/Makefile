@@ -78,6 +78,7 @@ SRCS+=	id.c
 CFLAGS+=-DNODES
 .else
 SRCS+=	chap_ms.c mppe.c
+CFLAGS+=-I${.CURDIR}/../../crypto/openssl/include
 LIBADD+=	crypto
 .endif
 

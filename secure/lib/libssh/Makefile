@@ -32,7 +32,7 @@ SRCS+=	bcrypt_pbkdf.c blowfish.c bsd-misc.c explicit_bzero.c fmt_scaled.c \
 SRCS+=	getrrsetbyname.c
 .else
 LDNSDIR=	${.CURDIR}/../../../contrib/ldns
-CFLAGS+=	-DHAVE_LDNS=1 -I${LDNSDIR}
+CFLAGS+=	-DHAVE_LDNS=1 -I${LDNSDIR} -I${.CURDIR}/../../../crypto/openssl/include
 SRCS+=	getrrsetbyname-ldns.c
 LIBADD+=	ldns
 .endif

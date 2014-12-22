@@ -8,6 +8,7 @@ CFLAGS=	-I${.CURDIR}/../../contrib/dma \
 	-DLIBEXEC_PATH='"/usr/libexec"' -DDMA_VERSION='"v0.9+"' \
 	-DDMA_ROOT_USER='"mailnull"' \
 	-DDMA_GROUP='"mail"'
+CFLAGS+= -I${.CURDIR}/../../crypto/openssl/include
 LIBADD=	ssl crypto
 
 PROG=	dma
