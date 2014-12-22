@@ -23,6 +23,7 @@ CFLAGS+=-I${SVNDIR}/include -I${SVNDIR} -I${.CURDIR}/.. \
 	-I${.CURDIR}/../lib/libapr_util \
 	-I${APRU}/include/private \
 	-I${APRU}/include
+CFLAGS+=-I${.CURDIR}/../../crypto/opensl/include
 
 LDADD=	-L${LIBSVN_CLIENTDIR} -lsvn_client \
 	-L${LIBSVN_WCDIR} -lsvn_wc \

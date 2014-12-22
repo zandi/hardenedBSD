@@ -11,6 +11,7 @@ LIB=	unbound
 PRIVATELIB=
 
 CFLAGS= -I${UNBOUNDDIR}	-I${LDNSDIR} -I${.OBJDIR}
+CFLAGS+= -I${.CURDIR}/../../crypto/openssl/include
 
 SRCS=	alloc.c autotrust.c config_file.c configlexer.l configparser.y \
 	context.c dname.c dns.c dnstree.c fptr_wlist.c infra.c \

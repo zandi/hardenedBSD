@@ -15,7 +15,7 @@ CFLAGS+=	-DINET6
 .endif
 
 .if ${MK_OPENSSL} != "no"
-CFLAGS+=	-DWITH_SSL
+CFLAGS+=	-DWITH_SSL -I${.CURDIR}/../../crypto/openssl/include
 LIBADD+=	ssl crypto
 .else
 LIBADD+=	md

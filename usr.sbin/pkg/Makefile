@@ -5,6 +5,7 @@ SRCS=	pkg.c dns_utils.c config.c
 MAN=	pkg.7
 
 CFLAGS+=-I${.CURDIR}/../../contrib/libucl/include
+CFLAGS+=-I${.CURDIR}/../../crypto/openssl/include
 .PATH:	${.CURDIR}/../../contrib/libucl/include
 LIBADD=	archive fetch ucl sbuf crypto
 

@@ -15,6 +15,7 @@ host.1: ldns-host.1
 		(rm -rf ${.TARGET} ; false)
 
 CFLAGS+=	-I${LDNSDIR}
+CFLAGS+=	-I${.CURDIR}/../../crypto/openssl/include
 LIBADD=		ldns
 
 .include <bsd.prog.mk>

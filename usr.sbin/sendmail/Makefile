@@ -53,6 +53,7 @@ CLEANFILES+=sm_os.h
 .if ${MK_OPENSSL} != "no"
 # STARTTLS support
 CFLAGS+=	-DSTARTTLS -D_FFR_TLS_1
+CFLAGS+=	-I${.CURDIR}/../../crypto/openssl/include
 LIBADD+=	ssl crypto
 .endif
 

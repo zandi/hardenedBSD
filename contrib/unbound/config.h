@@ -105,7 +105,10 @@
 #define HAVE_FCNTL 1
 
 /* Define to 1 if you have the `FIPS_mode' function. */
-#define HAVE_FIPS_MODE 1
+//#define HAVE_FIPS_MODE 0
+#ifdef	HAVE_FIPS_MODE
+#undef	HAVE_FIPS_MODE
+#endif
 
 /* Define to 1 if you have the `fork' function. */
 #define HAVE_FORK 1

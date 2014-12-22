@@ -5,4 +5,6 @@ PROG=	dc
 SRCS=	dc.c bcode.c inout.c mem.c stack.c
 LIBADD=	crypto
 
+CFLAGS+=	-I${.CURDIR}/../../crypto/openssl/include
+
 .include <bsd.prog.mk>

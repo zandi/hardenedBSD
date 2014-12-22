@@ -72,7 +72,7 @@ WARNS?=		3
 
 .if ${MK_OPENSSL} != "no"
 LIBADD+=	crypto
-CFLAGS+=	-DWITH_SSL
+CFLAGS+=	-DWITH_SSL ${.CURDIR}/../../crypto/openssl/include
 .else
 LIBADD+=	md
 .endif

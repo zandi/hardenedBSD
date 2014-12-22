@@ -10,6 +10,7 @@ EXPATDIR= ${.CURDIR}/../../../contrib/expat
 PROG=	unbound-anchor
 SRCS=	unbound-anchor.c
 CFLAGS=	-I${UNBOUNDDIR} -I${LDNSDIR} -I${EXPATDIR}/lib
+CFLAGS+= -I${.CURDIR}/../../../crypto/openssl/include
 LIBADD=	unbound bsdxml ssl crypto pthread
 MAN=	unbound-anchor.8
 

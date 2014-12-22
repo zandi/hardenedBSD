@@ -10,6 +10,7 @@ PROG=	unbound-control
 SCRIPTS=	unbound-control-setup.sh
 SRCS=	unbound-control.c worker_cb.c
 CFLAGS=	-I${UNBOUNDDIR} -I${LDNSDIR}
+CFLAGS+= -I${.CURDIR}/../../../crypto/openssl/include
 LIBADD=	unbound crypto ssl pthread
 MAN=	unbound-control.8
 

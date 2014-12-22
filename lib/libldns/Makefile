@@ -9,6 +9,7 @@ LIB=	ldns
 PRIVATELIB= true
 
 CFLAGS+= -I${LDNSDIR}
+CFLAGS+= -I${.CURDIR}/../../crypto/openssl/include
 
 SRCS=	buffer.c dane.c dname.c dnssec.c dnssec_sign.c dnssec_verify.c \
 	dnssec_zone.c duration.c error.c higher.c host2str.c host2wire.c \
