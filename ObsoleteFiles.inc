@@ -38,10 +38,10 @@
 #   xargs -n1 | sort | uniq -d;
 # done
 
-# 20141204 ibcs support removal
-OLD_FILES+=etc/rc.d/archdep
-OLD_FILES+=shate/examples/ibcs2/README
-OLD_FILES+=shate/examples/ibcs2/hello.uu
+# 20141223: remove in6_gif.h, in_gif.h and if_stf.h
+OLD_FILES+=usr/include/net/if_stf.h
+OLD_FILES+=usr/include/netinet/in_gif.h
+OLD_FILES+=usr/include/netinet6/in6_gif.h
 # 20141202: update to mandoc CVS 20141201
 OLD_FILES+=usr.bin/preconv
 OLD_FILES+=share/man/man1/preconv.1.gz
