@@ -2041,19 +2041,54 @@ process_needed(Obj_Entry *obj, Needed_Entry *needed, int flags)
     return (0);
 }
 
+/*
+ * uniformly pick a random number from [0,N)
+ *
+ * This is actually kind of tricky. We need to
+ * not accept random numbers which fall into
+ * the 'bad' range. Basically, chop [0, RAND_MAX]
+ * into consecutive segments which can be one-to-one
+ * mapped to [0,N) ( [0, N), [N, N+N), ...)
+ * In general, we'll have some chunk left over
+ * [kN, kN + m] where m = RAND_MAX % N.
+ *
+ * This last chunk is OK if and only if m = N-1.
+ * Otherwise, this chunk is of some size less than N,
+ * and is unacceptable. If our random number is
+ * in this 'bad' chunk, throw it out and try again.
+ *
+ * Though technically this algorithm may not terminate,
+ * the probability of that is vanishingly small.
+ * I can leave a comment about expected # of times we'll
+ * have to throw out our number and try again, but haven't
+ * done the calculation (it's small)
+ */
+static unsigned int
+uniform_random(unsigned int N) {
+	unsigned int r;
+	size_t sz = sizeof(unsigned int);
+	int mib[2];
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_ARND;
+
+	r=0;
+	do {
+		if (sysctl(mib, 2, &r, &sz, NULL, 0))
+		    return 0;
+	} while (r >= RAND_MAX - (RAND_MAX % N));
+
+	return r % N;
+}
+
 static void
 randomize_neededs(Obj_Entry *obj, int flags)
 {
     Needed_Entry **needs=NULL, *need=NULL;
     unsigned int i, j, nneed;
-    size_t sz = sizeof(unsigned int);
-    int mib[2];
 
     if (!(obj->needed) || (flags & RTLD_LO_FILTEES))
 	return;
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_ARND;
 
     for (nneed = 0, need = obj->needed; need != NULL; need = need->next)
 	nneed++;
@@ -2063,17 +2098,11 @@ randomize_neededs(Obj_Entry *obj, int flags)
 	for (i = 0, need = obj->needed; i < nneed; i++, need = need->next)
 	    needs[i] = need;
 
-	for (i=0; i < nneed; i++) {
-	    do {
-		if (sysctl(mib, 2, &j, &sz, NULL, 0))
-		    goto err;
-
-		j %= nneed;
-	    } while (j == i);
-
-	    need = needs[i];
-	    needs[i] = needs[j];
-	    needs[j] = need;
+	for (i=nneed-1; i >= 1; i--) {
+		j = uniform_random(i+1);
+		need = needs[i];
+		needs[i] = needs[j];
+		needs[j] = need;
 	}
 
 	for (i=0; i < nneed; i++)
